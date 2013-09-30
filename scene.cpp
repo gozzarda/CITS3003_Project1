@@ -307,7 +307,7 @@ void drawMesh(SceneObject sceneObj) {
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
 
-    mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale);
+    mat4 model = Translate(sceneObj.loc) * RotateZ(sceneObj.angles[2]) * RotateY(sceneObj.angles[1]) * RotateX(sceneObj.angles[0]) * Scale(sceneObj.scale);
 
 
 
@@ -339,6 +339,8 @@ display( void )
 
 
     view = Translate(0.0, 0.0, -viewDist);
+	view *= RotateX(camRotUpAndOverDeg);
+	view *= RotateY(camRotSidewaysDeg);
 
 
     SceneObject lightObj1 = sceneObjs[1]; // The actual light is just in front of the sphere.
