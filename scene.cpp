@@ -250,7 +250,7 @@ void init( void )
     glGenTextures(numTextures, textureIDs); CheckError(); // Allocate texture objects
 
     // Load shaders and use the resulting shader program
-    shaderProgram = InitShader( "vStart.glsl", "fStart.glsl" );
+    shaderProgram = InitShader( "vScene.glsl", "fScene.glsl" );
 
     glUseProgram( shaderProgram ); CheckError();
 
@@ -308,7 +308,7 @@ void drawMesh(SceneObject sceneObj) {
 
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
-
+	// [GOZ]: Scale, then Rotate about X, then Y, then Z, then translate.
     mat4 model = Translate(sceneObj.loc) * RotateZ(sceneObj.angles[2]) * RotateY(sceneObj.angles[1]) * RotateX(sceneObj.angles[0]) * Scale(sceneObj.scale);
 
 
@@ -340,9 +340,9 @@ display( void )
 
 
 
-    view = Translate(0.0, 0.0, -viewDist);
-	view *= RotateX(camRotUpAndOverDeg);
-	view *= RotateY(camRotSidewaysDeg);
+    view = Translate(0.0, 0.0, -viewDist)	// [GOZ]:
+			* RotateX(camRotUpAndOverDeg)	// Create total camera movement matrix M = T*RX*RY
+			* RotateY(camRotSidewaysDeg);	// Rotate around Y for bearing, then X for inclination, then translate away from origin
 
 
     SceneObject lightObj1 = sceneObjs[1]; // The actual light is just in front of the sphere.
