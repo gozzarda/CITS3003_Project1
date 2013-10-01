@@ -22,7 +22,7 @@ GLuint shaderProgram; // The number identifying the GLSL shader program
 GLuint vPosition, vNormal, vTexCoord; // IDs for vshader input vars (from glGetAttribLocation)
 GLuint projectionU, modelViewU; // IDs for uniform variables (from glGetUniformLocation)
 
-static float viewDist = 15; // Distance from the camera to the centre of the scene
+static float viewDist = 15; // Distance from the camera to the centre of the scene. Scaled by 10 for part D
 static float camRotSidewaysDeg=0; // rotates the camera sideways around the centre
 static float camRotUpAndOverDeg=20; // rotates the camera up and over the centre.
 
@@ -196,7 +196,7 @@ mat2 camRotZ() { return rotZ(-camRotSidewaysDeg) * mat2(10.0, 0, 0, -10.0); }
 //------Set the mouse buttons to rotate the camera around the centre of the scene. 
 
 static void doRotate() {
-    setTool(&camRotSidewaysDeg, &viewDist, mat2(400,0,0,-20),
+    setTool(&camRotSidewaysDeg, &viewDist, mat2(400,0,0,-20),	//final matrix entry scaled by 10 for part D
             &camRotSidewaysDeg, &camRotUpAndOverDeg, mat2(400, 0, 0,-90));
 }
 
@@ -215,7 +215,7 @@ static void addObject(int id) {
       sceneObjs[nObjects].scale = 0.005;
 
   sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
-  sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 1.0;
+  sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 2.0;	//brightness scaled by 2 for ease of eyes
 
   sceneObjs[nObjects].diffuse = 1.0; sceneObjs[nObjects].specular = 0.5;
   sceneObjs[nObjects].ambient = 0.7; sceneObjs[nObjects].shine = 10.0;
@@ -424,6 +424,7 @@ static void materialMenu(int id) {
   if(currObject<0) return;
   if(id==10) setTool(&sceneObjs[currObject].rgb[0], &sceneObjs[currObject].rgb[1], mat2(1, 0, 0, 1),
                      &sceneObjs[currObject].rgb[2], &sceneObjs[currObject].brightness, mat2(1, 0, 0, 1) );
+	//----part C solution
   if(id==20) setTool(&sceneObjs[currObject].ambient, &sceneObjs[currObject].diffuse, mat2(1, 0, 0, 1),
                      &sceneObjs[currObject].specular, &sceneObjs[currObject].shine, mat2(1, 0, 0, 20) );
 
@@ -513,12 +514,12 @@ void reshape( int width, int height ) {
     //   - when the width is less than the height, the view should adjust so that the same part
     //     of the scene is visible across the width of the window.
 
-    GLfloat nearDist = 0.02;
-	if ( width < height ) {
+    GLfloat nearDist = 0.02;	//Scaled by 0.1 for part D
+	if ( width < height ) {		//part E solution, visibility does not decrease for width < height
 		projection = Frustum(-nearDist, nearDist,
 							-nearDist*(float)height/(float)width, nearDist*(float)height/(float)width,
-							0.2, 1000.0);
-	} else {
+							0.2, 1000.0);	//far scaled by 10 for part D
+	} else {					//when height <= width as before
 		projection = Frustum(-nearDist*(float)width/(float)height, nearDist*(float)width/(float)height,
 							-nearDist, nearDist,
 							0.2, 1000.0);
