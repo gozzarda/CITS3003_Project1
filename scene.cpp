@@ -424,7 +424,8 @@ static void materialMenu(int id) {
   if(currObject<0) return;
   if(id==10) setTool(&sceneObjs[currObject].rgb[0], &sceneObjs[currObject].rgb[1], mat2(1, 0, 0, 1),
                      &sceneObjs[currObject].rgb[2], &sceneObjs[currObject].brightness, mat2(1, 0, 0, 1) );
-
+  if(id==20) setTool(&sceneObjs[currObject].ambient, &sceneObjs[currObject].diffuse, mat2(1, 0, 0, 1),
+                     &sceneObjs[currObject].specular, &sceneObjs[currObject].shine, mat2(1, 0, 0, 20) );
 
 
 
@@ -451,7 +452,7 @@ static void makeMenu() {
 
   int materialMenuId = glutCreateMenu(materialMenu);
   glutAddMenuEntry("R/G/B/All",10);
-  glutAddMenuEntry("UNIMPLEMENTED: Ambient/Diffuse/Specular/Shine",20);
+  glutAddMenuEntry("Ambient/Diffuse/Specular/Shine",20);
 
   int texMenuId = createArrayMenu(numTextures, textureMenuEntries, texMenu);
   int groundMenuId = createArrayMenu(numTextures, textureMenuEntries, groundMenu);
