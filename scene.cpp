@@ -22,7 +22,7 @@ GLuint shaderProgram; // The number identifying the GLSL shader program
 GLuint vPosition, vNormal, vTexCoord; // IDs for vshader input vars (from glGetAttribLocation)
 GLuint projectionU, modelViewU; // IDs for uniform variables (from glGetUniformLocation)
 
-static float viewDist = 1.5; // Distance from the camera to the centre of the scene
+static float viewDist = 15; // Distance from the camera to the centre of the scene
 static float camRotSidewaysDeg=0; // rotates the camera sideways around the centre
 static float camRotUpAndOverDeg=20; // rotates the camera up and over the centre.
 
@@ -196,7 +196,7 @@ mat2 camRotZ() { return rotZ(-camRotSidewaysDeg) * mat2(10.0, 0, 0, -10.0); }
 //------Set the mouse buttons to rotate the camera around the centre of the scene. 
 
 static void doRotate() {
-    setTool(&camRotSidewaysDeg, &viewDist, mat2(400,0,0,-2),
+    setTool(&camRotSidewaysDeg, &viewDist, mat2(400,0,0,-20),
             &camRotSidewaysDeg, &camRotUpAndOverDeg, mat2(400, 0, 0,-90));
 }
 
@@ -513,15 +513,15 @@ void reshape( int width, int height ) {
     //   - when the width is less than the height, the view should adjust so that the same part
     //     of the scene is visible across the width of the window.
 
-    GLfloat nearDist = 0.2;
+    GLfloat nearDist = 0.02;
 	if ( width < height ) {
 		projection = Frustum(-nearDist, nearDist,
 							-nearDist*(float)height/(float)width, nearDist*(float)height/(float)width,
-							nearDist, 100.0);
+							0.2, 100.0);
 	} else {
 		projection = Frustum(-nearDist*(float)width/(float)height, nearDist*(float)width/(float)height,
 							-nearDist, nearDist,
-							nearDist, 100.0);
+							0.2, 100.0);
 	}
 }
 
