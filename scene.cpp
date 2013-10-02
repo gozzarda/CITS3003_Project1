@@ -359,6 +359,9 @@ display( void )
 
     glUniform4fv( glGetUniformLocation(shaderProgram, "LightPosition"), 1, lightPosition); CheckError();
 	glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position); CheckError();
+	
+	glUniform3fv( glGetUniformLocation(shaderProgram, "Light1rgbBright"), 1, lightObj1.rgb * lightObj1.brightness );
+	glUniform3fv( glGetUniformLocation(shaderProgram, "Light2rgbBright"), 1, lightObj2.rgb * lightObj2.brightness );
 
     for(int i=0; i<nObjects; i++) {
         SceneObject so = sceneObjs[i];
@@ -368,8 +371,6 @@ display( void )
         glUniform3fv( glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb );
         glUniform3fv( glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb );
         glUniform1f( glGetUniformLocation(shaderProgram, "Shininess"), so.shine ); CheckError();
-		glUniform3fv( glGetUniformLocation(shaderProgram, "Light1rgbBright"), 1, lightObj1.rgb * lightObj1.brightness );
-		glUniform3fv( glGetUniformLocation(shaderProgram, "Light2rgbBright"), 1, lightObj2.rgb * lightObj2.brightness );
 
         drawMesh(sceneObjs[i]);
 
