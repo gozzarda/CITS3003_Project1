@@ -47,9 +47,11 @@ main()
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    color.rgb = (globalAmbient + ambient + diffuse + specular) / (sqrt(dot(Lvec, Lvec))/15 + 1);	// [GOZ]: Light drops off like 1/(R/15 + 1)
+    color.rgb = (globalAmbient + ambient + diffuse);	//[TFD]: Specular is seperate from color. 
     color.a = 1.0;
 
 
-    fColor = color * texture2D( texture, texCoord * 2.0 );
+    fColor = (color * texture2D( texture, texCoord * 2.0 ) + vec4( specular, 1.0 )) / (sqrt(dot(Lvec, Lvec))/15 + 1);
+	// [GOZ]: Light drops off like 1/(R/15 + 1)
+	//[TFD]: Spec does not depend on texture. May need scaling!
 }
