@@ -276,6 +276,13 @@ void init( void )
     sceneObjs[1].scale = 0.1;
     sceneObjs[1].texId = 0; // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
+	
+	// [GOZ]: Added second light for part I
+	addObject(55); // Sphere for the second light
+	sceneObjs[currObject].loc = vec4(-2.0, 2.0, -2.0, 1.0);
+    sceneObjs[currObject].scale = 0.2;
+    sceneObjs[currObject].texId = 0; // Plain texture
+    sceneObjs[currObject].brightness = 0.2; // The light's brightness is 5 times this (below).
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -347,17 +354,22 @@ display( void )
 
     SceneObject lightObj1 = sceneObjs[1]; // The actual light is just in front of the sphere.
     vec4 lightPosition = view * ( lightObj1.loc - normalize(lightObj1.loc)*lightObj1.scale*1.05 );
+	SceneObject lightObj2 = sceneObjs[2];
+	vec4 light2Position = view * lightObj2.loc;
 
     glUniform4fv( glGetUniformLocation(shaderProgram, "LightPosition"), 1, lightPosition); CheckError();
+	glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position); CheckError();
 
     for(int i=0; i<nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
-        vec3 rgb = so.rgb * lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0;
+        vec3 rgb = so.rgb * so.brightness * 2.0;
         glUniform3fv( glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb ); CheckError();
         glUniform3fv( glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb );
         glUniform3fv( glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb );
         glUniform1f( glGetUniformLocation(shaderProgram, "Shininess"), so.shine ); CheckError();
+		glUniform3fv( glGetUniformLocation(shaderProgram, "Light1rgbBright"), 1, lightObj1.rgb * lightObj1.brightness );
+		glUniform3fv( glGetUniformLocation(shaderProgram, "Light2rgbBright"), 1, lightObj2.rgb * lightObj2.brightness );
 
         drawMesh(sceneObjs[i]);
 
@@ -397,6 +409,13 @@ static void lightMenu(int id) {
     } else if(id>=71 && id<=74) {
         setTool(&sceneObjs[1].rgb[0], &sceneObjs[1].rgb[1], mat2(1.0, 0, 0, 1.0),
                 &sceneObjs[1].rgb[2], &sceneObjs[1].brightness, mat2(1.0, 0, 0, 1.0) );
+    } else if(id == 80) {
+        setTool(&sceneObjs[2].loc[0], &sceneObjs[2].loc[2], camRotZ(),
+                &sceneObjs[2].brightness, &sceneObjs[2].loc[1], mat2( 1.0, 0, 0, 10.0) );
+
+    } else if(id>=81 && id<=84) {
+        setTool(&sceneObjs[2].rgb[0], &sceneObjs[2].rgb[1], mat2(1.0, 0, 0, 1.0),
+                &sceneObjs[2].rgb[2], &sceneObjs[2].brightness, mat2(1.0, 0, 0, 1.0) );
     }
 
     else { printf("Error in lightMenu\n"); exit(1); }
