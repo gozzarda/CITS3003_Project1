@@ -415,12 +415,48 @@ display( void )
 
 //--------------Menus
 
+// [GOZ]: Uses stencil buffer to find the object currently under the cursor
+// [GOZ]: Returns ID of said object or currObject if none (inc ground, lights)
+int selectObject() {
+	int start = 3;
+	int range = nObjects-3;
+	int g = (253+range)/255;
+	int objid = start;
+	glClearStencil(0);
+	glScissor(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1);
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_SCISSOR_TEST);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	while ( g != 0 ) {
+		glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+		for ( int i = start; i < start+range; i++ ) {
+			glStencilFunc(GL_ALWAYS, 1 + (i-start)/g, -1);
+			drawMesh(sceneObjs[i]);
+		}
+		GLuint stencil;
+		glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stencil);
+		if (stencil == 0) {
+			objid = currObject;
+			break;
+		}
+		objid += g*(stencil-1);
+		start = objid;
+		range = g;
+		g = (253+range)/255;
+	}
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_SCISSOR_TEST);
+	CheckError();
+	return objid;
+}
+
 static void objectMenu(int id) {
   clearTool();
   addObject(id);
 }
 
 static void texMenu(int id) {
+	currObject = selectObject();	// [GOZ]: Get object under cursor
     clearTool();
     if(currObject>=0) {
         sceneObjs[currObject].texId = id;
@@ -475,20 +511,22 @@ static int createArrayMenu(int size, const char menuEntries[][128], void(*menuFn
 }
 
 static void materialMenu(int id) {
-  clearTool();
-  if(currObject<0) return;
-  if(id==10) setTool(&sceneObjs[currObject].rgb[0], &sceneObjs[currObject].rgb[1], mat2(1, 0, 0, 1),
-                     &sceneObjs[currObject].rgb[2], &sceneObjs[currObject].brightness, mat2(1, 0, 0, 1) );
-  if(id==20) setTool(&sceneObjs[currObject].ambient, &sceneObjs[currObject].diffuse, mat2(1, 0, 0, 1),
-                     &sceneObjs[currObject].specular, &sceneObjs[currObject].shine, mat2(1, 0, 0, 20) );
+	currObject = selectObject();	// [GOZ]: Get object under cursor
+	clearTool();
+	if(currObject<0) return;
+	if(id==10) setTool(&sceneObjs[currObject].rgb[0], &sceneObjs[currObject].rgb[1], mat2(1, 0, 0, 1),
+					&sceneObjs[currObject].rgb[2], &sceneObjs[currObject].brightness, mat2(1, 0, 0, 1) );
+	if(id==20) setTool(&sceneObjs[currObject].ambient, &sceneObjs[currObject].diffuse, mat2(1, 0, 0, 1),
+					&sceneObjs[currObject].specular, &sceneObjs[currObject].shine, mat2(1, 0, 0, 20) );
 	//[TFD]part C solution
 
 
 
-  else { printf("Error in materialMenu\n"); }
+	else { printf("Error in materialMenu\n"); }
 }
 
 static void mainmenu(int id) {
+	currObject = selectObject();	// [GOZ]: Get object under cursor
     clearTool();
     if(id == 41 && currObject>=0) {
         setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
