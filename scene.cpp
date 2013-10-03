@@ -206,33 +206,65 @@ static void doRotate() {
 
 static void addObject(int id) {
 
-  vec2 currPos = currXY(camRotSidewaysDeg);
-  sceneObjs[nObjects].loc[0] = currPos[0];
-  sceneObjs[nObjects].loc[1] = 0.0;
-  sceneObjs[nObjects].loc[2] = currPos[1];
-  sceneObjs[nObjects].loc[3] = 1.0;
-
-  if(id!=0 && id!=55)
-      sceneObjs[nObjects].scale = 0.005;
-
-  sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
-  sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 2.0;	
-  //[TFD]brightness scaled by 2 for ease of eyes
-
-  sceneObjs[nObjects].diffuse = 1.0; sceneObjs[nObjects].specular = 0.5;
-  sceneObjs[nObjects].ambient = 0.7; sceneObjs[nObjects].shine = 10.0;
-
-  sceneObjs[nObjects].angles[0] = 0.0; sceneObjs[nObjects].angles[1] = 180.0;
-  sceneObjs[nObjects].angles[2] = 0.0;
-
-  sceneObjs[nObjects].meshId = id;
-  sceneObjs[nObjects].texId = rand() % numTextures;
-  sceneObjs[nObjects].texScale = 2.0;
-
-  currObject = nObjects++;
-  setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
-          &sceneObjs[currObject].scale, &sceneObjs[currObject].loc[1], mat2(0.05, 0, 0, 10.0) );
-  glutPostRedisplay();
+	// [GOZ]: Raycasting to place object where click intersects with world plane.
+	mat4 invView = RotateY(-camRotSidewaysDeg) * RotateX(-camRotUpAndOverDeg) * Translate(0.0, 0.0, viewDist);
+	mat4 p = projection;	// [GOZ]: For legibility
+	mat4 invProj = mat4(1.0/p[0][0], 0.0, 0.0, 0.0,		// [GOZ]: Inverse of the projection matrix
+						0.0, 1.0/p[1][1], 0.0, 0.0,
+						-p[0][2]/(p[0][0]*(p[2][2]+p[2][3])), -p[1][2]/(p[1][1]*(p[2][2]+p[2][3])), 1.0/(p[2][2]+p[2][3]), 1.0/(p[2][2]+p[2][3]),
+						p[0][2]*p[2][3]/(p[0][0]*(p[2][2]+p[2][3])), p[1][2]*p[2][3]/(p[1][1]*(p[2][2]+p[2][3])), -p[2][3]/(p[2][2]+p[2][3]), p[2][2]/(p[2][2]+p[2][3]));
+	
+	// [GOZ]: Run through pipeline in reverse to convert 2D click to 4D world co-ords
+	vec4 mouseRay = vec4(2.0 * currRawX() - 1.0, 2.0 * currRawY() - 1.0, -1.0, 1.0);
+	mouseRay = invProj * mouseRay;
+	mouseRay.z = -1.0;		mouseRay.w = 0.0;
+	mouseRay = invView * mouseRay;		mouseRay.w = 0.0;
+	mouseRay = normalize(mouseRay);
+	
+	// [GOZ]: Find the plane of the ground and define it by its normal and offset from origin
+	SceneObject ground = sceneObjs[0];
+	vec4 groundNorm = vec4(0.0, 0.0, 1.0, 0.0);
+	groundNorm = RotateZ(ground.angles[2]) * RotateY(ground.angles[1]) * RotateX(ground.angles[0]) * groundNorm;
+	float groundDist = dot(ground.loc, groundNorm);
+	
+	// [GOZ]: Applying the inverse of the view matrix to the origin gives us the camera co-ords
+	vec4 camLoc = invView * vec4(0.0, 0.0, 0.0, 1.0);
+	
+	// [GOZ]: Find the point of intersection between the ray and the ground plane
+	float intersectDist = dot(normalize(mouseRay), groundNorm);
+	if (intersectDist == 0.0f) {	// [GOZ]: Just to be sure
+		sceneObjs[nObjects].loc = vec4();	// [GOZ]: In event of failure, place at origin.
+	} else {
+		intersectDist = (groundDist - dot(camLoc, groundNorm)) / intersectDist;
+		if (intersectDist < 0.0f) { // [GOZ]: Ground behind camera (shouldn't happen)
+			sceneObjs[nObjects].loc = vec4();
+		} else {
+			sceneObjs[nObjects].loc = intersectDist * mouseRay + camLoc;
+		}
+	}
+	sceneObjs[nObjects].loc[3] = 1.0;
+	
+	if(id!=0 && id!=55)
+		sceneObjs[nObjects].scale = 0.005;
+	
+	sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
+	sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 2.0;	
+	//[TFD]brightness scaled by 2 for ease of eyes
+	
+	sceneObjs[nObjects].diffuse = 1.0; sceneObjs[nObjects].specular = 0.5;
+	sceneObjs[nObjects].ambient = 0.7; sceneObjs[nObjects].shine = 10.0;
+	
+	sceneObjs[nObjects].angles[0] = 0.0; sceneObjs[nObjects].angles[1] = 180.0;
+	sceneObjs[nObjects].angles[2] = 0.0;
+	
+	sceneObjs[nObjects].meshId = id;
+	sceneObjs[nObjects].texId = rand() % numTextures;
+	sceneObjs[nObjects].texScale = 2.0;
+	
+	currObject = nObjects++;
+	setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
+			&sceneObjs[currObject].scale, &sceneObjs[currObject].loc[1], mat2(0.05, 0, 0, 10.0) );
+	glutPostRedisplay();
 }
 
 
@@ -350,7 +382,7 @@ display( void )
 
 	// Create total camera movement matrix M = T*RX*RY
 	// Rotate around Y for bearing, then X for inclination, then translate away from origin
-    view = Translate(0.0, 0.0, -viewDist) * rot;	// [GOZ]:
+    view = Translate(0.0, 0.0, -viewDist) * rot;
 
 
     SceneObject lightObj1 = sceneObjs[1]; // The actual light is just in front of the sphere.
