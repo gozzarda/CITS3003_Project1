@@ -466,7 +466,7 @@ static void mainmenu(int id) {
         doRotate();
     if(id == 55 && currObject>=0) {
         setTool(&sceneObjs[currObject].angles[1], &sceneObjs[currObject].angles[0], mat2(400, 0, 0, -400),
-                &sceneObjs[currObject].angles[2], &sceneObjs[currObject].texScale, mat2(400, 0, 0, 15) );
+                &sceneObjs[currObject].angles[2], &sceneObjs[currObject].texScale, mat2(400, 0, 0, 6) );
     }
     if(id == 99) exit(0);
 }

@@ -13,6 +13,7 @@ uniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct;
 uniform mat4 ModelView;
 uniform vec4 LightPosition;
 uniform float Shininess;
+uniform float texScale;
 uniform vec4 Light2Position;
 uniform vec3 Light1rgbBright;
 uniform vec3 Light2rgbBright;
@@ -67,6 +68,7 @@ main()
     color.a = 1.0;
 
 
-    fColor = (color * texture2D( texture, texCoord * 2.0 )) + vec4( specular/dropoff + specular2, 1.0 );
+    fColor = (color * texture2D( texture, texCoord * 2.0 * texScale )) + vec4( specular/dropoff + specular2, 1.0 );
 	//[TFD]: Spec does not depend on texture. May need scaling!
+	//[TFD]: texScale scales texCoord. larger texScale=>smaller texture
 }
