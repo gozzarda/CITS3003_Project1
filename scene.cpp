@@ -391,6 +391,9 @@ void
 display( void )
 {
     numDisplayCalls++;
+	
+	if ( lightSpread > 1.0 ) lightSpread = 1.0;
+	else if ( lightSpread < -1.0 ) lightSpread = -1.0;
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     CheckError(); // May report a harmless GL_INVALID_OPERATION with GLEW on the first frame
