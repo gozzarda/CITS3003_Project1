@@ -14,6 +14,8 @@
 // This file contains parts of the code that you shouldn't need to modify (but, you can).
 #include "gnatidread.h"
 
+#define NUM_LG 3	// [GOZ]: Number of Lights/Grounds
+
 using namespace std;    // Import the C++ standard functions (e.g., min) 
 
 
@@ -267,6 +269,22 @@ static void addObject(int id) {
 	glutPostRedisplay();
 }
 
+static void duplicateObject(int objid) {
+	sceneObjs[nObjects] = sceneObjs[objid];
+	currObject = nObjects++;
+	setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
+			&sceneObjs[currObject].scale, &sceneObjs[currObject].loc[1], mat2(0.05, 0, 0, 10.0) );
+	glutPostRedisplay();
+}
+
+static void deleteObject(int objid) {
+	if ( objid >= NUM_LG ) {
+		sceneObjs[objid] = sceneObjs[--nObjects];
+		currObject = -1;
+		doRotate();
+		glutPostRedisplay();
+	}
+}
 
 // ------ The init function
 
@@ -417,9 +435,9 @@ display( void )
 
 // [GOZ]: Uses stencil buffer to find the object currently under the cursor
 // [GOZ]: Returns ID of said object or currObject if none (inc ground, lights)
-int selectObject() {
-	int start = 3;
-	int range = nObjects-3;
+static int selectObject() {
+	int start = 0;
+	int range = nObjects;
 	int g = (253+range)/255;
 	int objid = start;
 	glClearStencil(0);
@@ -447,6 +465,7 @@ int selectObject() {
 	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_SCISSOR_TEST);
 	CheckError();
+	if ( objid < NUM_LG ) objid = currObject; // [GOZ]: Ignore ground and lights
 	return objid;
 }
 
@@ -457,6 +476,7 @@ static void objectMenu(int id) {
 
 static void texMenu(int id) {
 	currObject = selectObject();	// [GOZ]: Get object under cursor
+	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects
     clearTool();
     if(currObject>=0) {
         sceneObjs[currObject].texId = id;
@@ -512,6 +532,7 @@ static int createArrayMenu(int size, const char menuEntries[][128], void(*menuFn
 
 static void materialMenu(int id) {
 	currObject = selectObject();	// [GOZ]: Get object under cursor
+	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects
 	clearTool();
 	if(currObject<0) return;
 	if(id==10) setTool(&sceneObjs[currObject].rgb[0], &sceneObjs[currObject].rgb[1], mat2(1, 0, 0, 1),
@@ -527,6 +548,7 @@ static void materialMenu(int id) {
 
 static void mainmenu(int id) {
 	currObject = selectObject();	// [GOZ]: Get object under cursor
+	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects
     clearTool();
     if(id == 41 && currObject>=0) {
         setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
@@ -538,6 +560,8 @@ static void mainmenu(int id) {
         setTool(&sceneObjs[currObject].angles[1], &sceneObjs[currObject].angles[0], mat2(400, 0, 0, -400),
                 &sceneObjs[currObject].angles[2], &sceneObjs[currObject].texScale, mat2(400, 0, 0, 6) );
     }
+	if ( id == 95 ) duplicateObject(currObject);	// [GOZ]: Duplicate Object
+	if ( id == 96 ) deleteObject(currObject);		// [GOZ]: Delete Object
     if(id == 99) exit(0);
 }
 
@@ -566,6 +590,8 @@ static void makeMenu() {
   glutAddSubMenu("Texture",texMenuId);
   glutAddSubMenu("Ground Texture",groundMenuId);
   glutAddSubMenu("Lights",lightMenuId);
+  glutAddMenuEntry("Duplicate", 95);
+  glutAddMenuEntry("Delete", 96);
   glutAddMenuEntry("EXIT", 99);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
