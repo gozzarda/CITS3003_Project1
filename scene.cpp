@@ -506,8 +506,8 @@ static void lightMenu(int id) {
         setTool(&sceneObjs[1].rgb[0], &sceneObjs[1].rgb[1], mat2(1.0, 0, 0, 1.0),
                 &sceneObjs[1].rgb[2], &sceneObjs[1].brightness, mat2(1.0, 0, 0, 1.0) );
     } else if(id==72) {			//[TFD]: I'm unsure of the rotation stuffs.
-        setTool(&sceneObjs[1].angles[2], &sceneObjs[1].angles[0], mat2(400, 0, 0, -400),
-                &sceneObjs[1].angles[1], &lightSpread, mat2(400, 0, 0, -1.0) );
+        setTool(&sceneObjs[1].angles[1], &sceneObjs[1].angles[0], mat2(-400, 0, 0, -200),
+                &sceneObjs[1].brightness, &lightSpread, mat2(1.0, 0, 0, -1.0) );
     } else if(id == 80) {
         setTool(&sceneObjs[2].loc[0], &sceneObjs[2].loc[2], camRotZ(),
                 &sceneObjs[2].brightness, &sceneObjs[2].loc[1], mat2( 1.0, 0, 0, 10.0) );
