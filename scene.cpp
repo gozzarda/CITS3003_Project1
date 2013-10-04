@@ -396,17 +396,16 @@ display( void )
 // add appropriate rotations.
 
 
-	mat4 rot = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg); // Camera rotation matrix
-
-	// Create total camera movement matrix M = T*RX*RY
-	// Rotate around Y for bearing, then X for inclination, then translate away from origin
-    view = Translate(0.0, 0.0, -viewDist) * rot;
+	// [GOZ]: Create total camera movement matrix M = T*RX*RY
+	// [GOZ]: Rotate around Y for bearing, then X for inclination, then translate away from origin
+    view = Translate(0.0, 0.0, -viewDist) * RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
 
 
     SceneObject lightObj1 = sceneObjs[1]; // The actual light is just in front of the sphere.
     vec4 lightPosition = view * ( lightObj1.loc - normalize(lightObj1.loc)*lightObj1.scale*1.05 );
 	SceneObject lightObj2 = sceneObjs[2];
-	vec4 light2Position = rot * lightObj2.loc;
+	lightObj2.loc.w = 0.0;
+	vec4 light2Position = view * lightObj2.loc;
 
     glUniform4fv( glGetUniformLocation(shaderProgram, "LightPosition"), 1, lightPosition); CheckError();
 	glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position); CheckError();
