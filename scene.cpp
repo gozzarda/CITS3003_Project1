@@ -55,6 +55,9 @@ GLuint textureIDs[numTextures]; // Stores the IDs returned by glGenTextures
 //
 // For each object in a scene we store the following
 // Note: the following is exactly what the sample solution uses, you can do things differently if you want.
+
+float lightSpread = -1.0;	//[TFD]: spotlight conesize, -1.0 is for a full light, 1.0 for no light.
+
 typedef struct {
     vec4 loc;
     float scale;
@@ -401,18 +404,22 @@ display( void )
     view = Translate(0.0, 0.0, -viewDist) * RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
 
 
-    SceneObject lightObj1 = sceneObjs[1]; // The actual light is just in front of the sphere.
-    vec4 lightPosition = view * ( lightObj1.loc - normalize(lightObj1.loc)*lightObj1.scale*1.05 );
+	SceneObject lightObj1 = sceneObjs[1]; //[TFD]: The actual light is in the middle of the sphere
+	vec4 lightPosition = view * lightObj1.loc;
 	SceneObject lightObj2 = sceneObjs[2];
 	lightObj2.loc.w = 0.0;
 	vec4 light2Position = view * lightObj2.loc;
 
+	vec4 lightRot = view * RotateZ(sceneObjs[1].angles[2]) * RotateY(sceneObjs[1].angles[1]) * RotateX(sceneObjs[1].angles[0]) * vec4( 0.0, 1.0, 0.0, 0.0);
     glUniform4fv( glGetUniformLocation(shaderProgram, "LightPosition"), 1, lightPosition); CheckError();
 	glUniform4fv( glGetUniformLocation(shaderProgram, "Light2Position"), 1, light2Position); CheckError();
 	
 	glUniform3fv( glGetUniformLocation(shaderProgram, "Light1rgbBright"), 1, lightObj1.rgb * lightObj1.brightness );
 	glUniform3fv( glGetUniformLocation(shaderProgram, "Light2rgbBright"), 1, lightObj2.rgb * lightObj2.brightness );
 
+	glUniform4fv( glGetUniformLocation(shaderProgram, "lightRot"), 1, lightRot); CheckError();
+	glUniform1f( glGetUniformLocation(shaderProgram, "spread"), lightSpread); CheckError();
+	
     for(int i=0; i<nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
@@ -495,9 +502,12 @@ static void lightMenu(int id) {
         setTool(&sceneObjs[1].loc[0], &sceneObjs[1].loc[2], camRotZ(),
                 &sceneObjs[1].brightness, &sceneObjs[1].loc[1], mat2( 1.0, 0, 0, 10.0) );
 
-    } else if(id>=71 && id<=74) {
+    } else if(id==71) {
         setTool(&sceneObjs[1].rgb[0], &sceneObjs[1].rgb[1], mat2(1.0, 0, 0, 1.0),
                 &sceneObjs[1].rgb[2], &sceneObjs[1].brightness, mat2(1.0, 0, 0, 1.0) );
+    } else if(id==72) {			//[TFD]: I'm unsure of the rotation stuffs.
+        setTool(&sceneObjs[1].angles[2], &sceneObjs[1].angles[0], mat2(400, 0, 0, -400),
+                &sceneObjs[1].angles[1], &lightSpread, mat2(400, 0, 0, -1.0) );
     } else if(id == 80) {
         setTool(&sceneObjs[2].loc[0], &sceneObjs[2].loc[2], camRotZ(),
                 &sceneObjs[2].brightness, &sceneObjs[2].loc[1], mat2( 1.0, 0, 0, 10.0) );
@@ -577,6 +587,7 @@ static void makeMenu() {
   int lightMenuId = glutCreateMenu(lightMenu);
   glutAddMenuEntry("Move Light 1",70);
   glutAddMenuEntry("R/G/B/All Light 1",71);
+  glutAddMenuEntry("Rot/Spread light 1",72);
   glutAddMenuEntry("Move Light 2",80);
   glutAddMenuEntry("R/G/B/All Light 2",81);
 
