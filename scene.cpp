@@ -19,6 +19,8 @@
 using namespace std;    // Import the C++ standard functions (e.g., min) 
 
 char saveFile[256];	//[TFD]:considering letting command line arguments include save location
+const int numSaves = 100;
+char saveDefault[] = "sceneSave";
 
 // IDs for the GLSL program and GLSL variables.
 GLuint shaderProgram; // The number identifying the GLSL shader program
@@ -377,10 +379,7 @@ void init( void )
 
     //addObject(rand() % numMeshes); // A test mesh
 
-	for ( int i = 0; i < 767; i++ ) {
-		addObject(rand() % numMeshes);
-		sceneObjs[currObject].loc = vec4((float)i, 0.0, 0.0, 1.0);
-	}
+	addObject(rand() % numMeshes);
 	
     // We need to enable the depth test to discard fragments that
     // are behind previously drawn fragments for the same pixel.
@@ -541,6 +540,18 @@ static void groundMenu(int id) {
         glutPostRedisplay();
 }
 
+static void saveMenu(int id) {
+	sprintf(saveFile, "%s%d.sav", saveFile, id);
+	saveScene();
+	strcpy(saveFile, saveDefault);
+}
+
+static void loadMenu(int id) {
+	sprintf(saveFile, "%s%d.sav", saveFile, id);
+	loadScene();
+	strcpy(saveFile, saveDefault);
+}
+
 static void lightMenu(int id) {
     clearTool();
     if(id == 70) {
@@ -617,8 +628,6 @@ static void mainmenu(int id) {
 	if ( id == 95 ) duplicateObject(currObject);	// [GOZ]: Duplicate Object
 	if ( id == 96 ) deleteObject(currObject);		// [GOZ]: Delete Object
     if(id == 99) exit(0);
-	if(id == 101) saveScene();
-	if(id == 102) loadScene();
 }
 
 static void makeMenu() {
@@ -631,13 +640,18 @@ static void makeMenu() {
   int texMenuId = createArrayMenu(numTextures, textureMenuEntries, texMenu);
   int groundMenuId = createArrayMenu(numTextures, textureMenuEntries, groundMenu);
 
+  char saveMenuEntries[numSaves][128];
+  for(int i=0; i < numSaves; i++) sprintf( saveMenuEntries[i], "%s%d", saveFile, i + 1);
+  int saveMenuID = createArrayMenu(numSaves, saveMenuEntries, saveMenu);
+  int loadMenuID = createArrayMenu(numSaves, saveMenuEntries, loadMenu);
+  
   int lightMenuId = glutCreateMenu(lightMenu);
   glutAddMenuEntry("Move Light 1",70);
   glutAddMenuEntry("R/G/B/All Light 1",71);
   glutAddMenuEntry("Rot/Spread light 1",72);
   glutAddMenuEntry("Move Light 2",80);
   glutAddMenuEntry("R/G/B/All Light 2",81);
-
+  
   glutCreateMenu(mainmenu);
   glutAddMenuEntry("Rotate/Move Camera",50);
   glutAddSubMenu("Add object", objectId);
@@ -650,8 +664,8 @@ static void makeMenu() {
   glutAddMenuEntry("Duplicate", 95);
   glutAddMenuEntry("Delete", 96);
   glutAddMenuEntry("EXIT", 99);
-  glutAddMenuEntry("Save", 101);
-  glutAddMenuEntry("Load", 102);
+  glutAddSubMenu("Save", saveMenuID);
+  glutAddSubMenu("Load", loadMenuID);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -719,7 +733,6 @@ void timer(int unused)
 
 char dirDefault1[] = "models-textures";
 char dirDefault2[] = "/cslinux/examples/CITS3003/project-files/models-textures";
-char saveDefault[] = "sceneSave.bin";
 
 void fileErr(char* fileName) {
     printf("Error reading file: %s\n", fileName);
@@ -743,9 +756,9 @@ int main( int argc, char* argv[] )
     else if(opendir(dirDefault2))
 		strcpy(dataDir, dirDefault2);
     else fileErr(dirDefault1);
-
+	
 	strcpy(saveFile, saveDefault);
-
+	
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
     glutInitWindowSize( windowWidth, windowHeight );
