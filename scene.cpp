@@ -678,10 +678,10 @@ static void makeMenu() {
   glutAddSubMenu("Ground Texture",groundMenuId);
   glutAddSubMenu("Lights",lightMenuId);
   glutAddMenuEntry("Duplicate", 95);
-  glutAddMenuEntry("Delete", 96);
-  glutAddMenuEntry("EXIT", 99);
   glutAddSubMenu("Save", saveMenuID);
   glutAddSubMenu("Load", loadMenuID);
+  glutAddMenuEntry("Delete", 96);
+  glutAddMenuEntry("EXIT", 99);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
