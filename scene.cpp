@@ -18,7 +18,7 @@
 
 using namespace std;    // Import the C++ standard functions (e.g., min) 
 
-char saveFile[256];	//[TFD]:considering letting command line arguments include save location
+char saveFile[256];	// [TFD]:considering letting command line arguments include save location
 const int numSaves = 5;
 char saveDefault[] = "sceneSave";
 
@@ -217,6 +217,7 @@ static void addObject(int id) {
 	if ( nObjects >= maxObjects ) return;	// [GOZ]: Don't add an object if we don't have memory for it
 
 	// [GOZ]: PART J. Raycasting to place object where click intersects with world plane.
+	// [GOZ]: Reference: http://www.antongerdelan.net/opengl/raycasting.html
 	mat4 invView = RotateY(-camRotSidewaysDeg) * RotateX(-camRotUpAndOverDeg) * Translate(0.0, 0.0, viewDist);
 	mat4 p = projection;	// [GOZ]: For legibility
 	mat4 invProj = mat4(1.0/p[0][0], 0.0, 0.0, 0.0,		// [GOZ]: Inverse of the projection matrix
@@ -310,7 +311,7 @@ void saveScene(void){
 	fwrite(sceneObjs, sizeof(SceneObject), nObjects, pFile);
 	pFile = fopen (saveFile,"w+"); 		
 
-	//[TFD]: reference: http://www.cplusplus.com/reference/cstdio/fread/
+	// [TFD]: reference: http://www.cplusplus.com/reference/cstdio/fread/
 	if (pFile == NULL) {
 		fprintf ("File error", stderr); 
 	} else {
@@ -499,6 +500,7 @@ display( void )
 //--------------Menus
 
 // [GOZ]: PART J. Uses stencil buffer to find the object currently under the cursor
+// [GOZ]: Reference: http://en.wikibooks.org/wiki/OpenGL_Programming/Object_selection
 // [GOZ]: Returns ID of said object or currObject if none (inc ground, lights)
 static int selectObject() {
 	int power = 1;
