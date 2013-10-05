@@ -54,8 +54,8 @@ main()
 	float Ks2 = pow( max(dot(N, H2), 0.0), Shininess );
     vec3  specular2 = Light2rgbBright * Ks2 * SpecularProduct;
 
-	//[TFD]: light has no effect on fragments outside cone of light
-	if(dot(L,normalize(lightRot.xyz)) < spread){ //[TFD]: if the fragment is in the cone of light
+	// [TFD]: PART J. Light has no effect on fragments outside cone of spotlight
+	if(dot(L,normalize(lightRot.xyz)) < spread){ // [TFD]: if the fragment is not in the cone of light
 		ambient = vec3(0.0, 0.0, 0.0);
 		diffuse = vec3(0.0, 0.0, 0.0);
 		specular = vec3(0.0, 0.0, 0.0);
@@ -71,12 +71,12 @@ main()
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
 	float dropoff = sqrt(dot(Lvec, Lvec))/15 + 1;
-    color.rgb = ((ambient + diffuse) / dropoff) + globalAmbient + ambient2 + diffuse2;	// [GOZ]: Light due to Light 1 drops off like 1/(R/15 + 1)
-	//[TFD]: Specular is seperate from color. 
+    color.rgb = ((ambient + diffuse) / dropoff) + globalAmbient + ambient2 + diffuse2;	// [GOZ]: PART F. Light due to Light 1 drops off like 1/(R/15 + 1)
+	// [TFD]: PART H. Specular is seperate from color. 
 	// [GOZ]: Light due to light 2 does not drop off
     color.a = 1.0;
 
     fColor = (color * texture2D( texture, texCoord * 2.0 * texScale )) + vec4( specular / dropoff + specular2, 1.0 );
-	//[TFD]: Spec does not depend on texture. May need scaling!
-	//[TFD]: texScale scales texCoord. larger texScale=>smaller texture
+	// [TFD]: PART H. Spec does not depend on texture
+	// [TFD]: PART J. texScale scales texCoord. larger texScale=>smaller texture
 }

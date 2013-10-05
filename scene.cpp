@@ -25,7 +25,7 @@ GLuint vPosition, vNormal, vTexCoord; // IDs for vshader input vars (from glGetA
 GLuint projectionU, modelViewU; // IDs for uniform variables (from glGetUniformLocation)
 
 static float viewDist = 15; // Distance from the camera to the centre of the scene. 
-//[TFD] Scaled by 10 for part D 
+// [TFD]: PART D. Scaled by 10
 static float camRotSidewaysDeg=0; // rotates the camera sideways around the centre
 static float camRotUpAndOverDeg=20; // rotates the camera up and over the centre.
 
@@ -56,7 +56,7 @@ GLuint textureIDs[numTextures]; // Stores the IDs returned by glGenTextures
 // For each object in a scene we store the following
 // Note: the following is exactly what the sample solution uses, you can do things differently if you want.
 
-float lightSpread = -1.0;	//[TFD]: spotlight conesize, -1.0 is for a full light, 1.0 for no light.
+float lightSpread = -1.0;	// [TFD]: PART J. spotlight conesize, -1.0 is for a full light, 1.0 for no light.
 
 typedef struct {
     vec4 loc;
@@ -202,7 +202,7 @@ mat2 camRotZ() { return rotZ(-camRotSidewaysDeg) * mat2(10.0, 0, 0, -10.0); }
 //------Set the mouse buttons to rotate the camera around the centre of the scene. 
 
 static void doRotate() {
-    setTool(&camRotSidewaysDeg, &viewDist, mat2(400,0,0,-20),	//[TFD]final matrix entry scaled by 10 for part D
+    setTool(&camRotSidewaysDeg, &viewDist, mat2(400,0,0,-20),	// [TFD]: PART D. final matrix entry scaled by 10
             &camRotSidewaysDeg, &camRotUpAndOverDeg, mat2(400, 0, 0,-90));
 }
 
@@ -211,7 +211,7 @@ static void doRotate() {
 
 static void addObject(int id) {
 
-	// [GOZ]: Raycasting to place object where click intersects with world plane.
+	// [GOZ]: PART J. Raycasting to place object where click intersects with world plane.
 	mat4 invView = RotateY(-camRotSidewaysDeg) * RotateX(-camRotUpAndOverDeg) * Translate(0.0, 0.0, viewDist);
 	mat4 p = projection;	// [GOZ]: For legibility
 	mat4 invProj = mat4(1.0/p[0][0], 0.0, 0.0, 0.0,		// [GOZ]: Inverse of the projection matrix
@@ -253,8 +253,7 @@ static void addObject(int id) {
 		sceneObjs[nObjects].scale = 0.005;
 	
 	sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
-	sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 2.0;	
-	//[TFD]brightness scaled by 2 for ease of eyes
+	sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 1.0;	
 	
 	sceneObjs[nObjects].diffuse = 1.0; sceneObjs[nObjects].specular = 0.5;
 	sceneObjs[nObjects].ambient = 0.7; sceneObjs[nObjects].shine = 10.0;
@@ -272,6 +271,7 @@ static void addObject(int id) {
 	glutPostRedisplay();
 }
 
+// [GOZ]: PART J. Duplicate objects exactly, and set it as the current object
 static void duplicateObject(int objid) {
 	sceneObjs[nObjects] = sceneObjs[objid];
 	currObject = nObjects++;
@@ -280,6 +280,7 @@ static void duplicateObject(int objid) {
 	glutPostRedisplay();
 }
 
+// [GOZ]: PART J. Delete object and set no object currently selected. Prevent deletion of ground/lights. Set tool to camera
 static void deleteObject(int objid) {
 	if ( objid >= NUM_LG ) {
 		sceneObjs[objid] = sceneObjs[--nObjects];
@@ -330,7 +331,7 @@ void init( void )
     sceneObjs[1].texId = 0; // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 	
-	// [GOZ]: Added second light for part I
+	// [GOZ]: PART I. Added second light
 	addObject(55); // Sphere for the second light
 	sceneObjs[currObject].loc = vec4(-2.0, 2.0, -2.0, 1.0);
     sceneObjs[currObject].scale = 0.2;
@@ -368,7 +369,7 @@ void drawMesh(SceneObject sceneObj) {
 
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
-	// [GOZ]: Scale, then Rotate about X, then Y, then Z, then translate.
+	// [GOZ]: PART B. Scale, then Rotate about X, then Y, then Z, then translate.
     mat4 model = Translate(sceneObj.loc) * RotateZ(sceneObj.angles[2]) * RotateY(sceneObj.angles[1]) * RotateX(sceneObj.angles[0]) * Scale(sceneObj.scale);
 
 
@@ -392,7 +393,7 @@ display( void )
 {
     numDisplayCalls++;
 	
-	if ( lightSpread > 1.0 ) lightSpread = 1.0;
+	if ( lightSpread > 1.0 ) lightSpread = 1.0;	// [TFD]: Cap spotlight spread
 	else if ( lightSpread < -1.0 ) lightSpread = -1.0;
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -402,12 +403,12 @@ display( void )
 // add appropriate rotations.
 
 
-	// [GOZ]: Create total camera movement matrix M = T*RX*RY
+	// [GOZ]: PART A. Create total camera movement matrix M = T*RX*RY
 	// [GOZ]: Rotate around Y for bearing, then X for inclination, then translate away from origin
     view = Translate(0.0, 0.0, -viewDist) * RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
 
 
-	SceneObject lightObj1 = sceneObjs[1]; //[TFD]: The actual light is in the middle of the sphere
+	SceneObject lightObj1 = sceneObjs[1]; // [TFD]: The actual light is in the middle of the sphere
 	vec4 lightPosition = view * lightObj1.loc;
 	SceneObject lightObj2 = sceneObjs[2];
 	lightObj2.loc.w = 0.0;
@@ -426,7 +427,7 @@ display( void )
     for(int i=0; i<nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
-        vec3 rgb = so.rgb * so.brightness * 2.0;
+        vec3 rgb = so.rgb * so.brightness * 4.0; // [TFD]: Base brightness doubled for ease on eyes
         glUniform3fv( glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb ); CheckError();
         glUniform3fv( glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb );
         glUniform3fv( glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb );
@@ -442,27 +443,27 @@ display( void )
 
 //--------------Menus
 
-// [GOZ]: Uses stencil buffer to find the object currently under the cursor
+// [GOZ]: PART J. Uses stencil buffer to find the object currently under the cursor
 // [GOZ]: Returns ID of said object or currObject if none (inc ground, lights)
 static int selectObject() {
 	int start = 0;
 	int range = nObjects;
-	int g = (253+range)/255;
+	int g = (253+range)/255;	// [GOZ]: Groupsize required due to stencil buffer 8-bit limit
 	int objid = start;
 	glClearStencil(0);
 	glScissor(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1);
 	glEnable(GL_STENCIL_TEST);
 	glEnable(GL_SCISSOR_TEST);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	while ( g != 0 ) {
+	while ( g != 0 ) {	// [GOZ]: Recurses until groupsize is 0 (object has been found)
 		glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-		for ( int i = start; i < start+range; i++ ) {
-			glStencilFunc(GL_ALWAYS, 1 + (i-start)/g, -1);
-			drawMesh(sceneObjs[i]);
+		for ( int i = 0; i < range; i++ ) {
+			glStencilFunc(GL_ALWAYS, 1 + i/g, -1);
+			drawMesh(sceneObjs[i+start]);
 		}
 		GLuint stencil;
 		glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stencil);
-		if (stencil == 0) {
+		if (stencil == 0) {	// [GOZ]: Nothing under cursor
 			objid = currObject;
 			break;
 		}
@@ -508,7 +509,7 @@ static void lightMenu(int id) {
     } else if(id==71) {
         setTool(&sceneObjs[1].rgb[0], &sceneObjs[1].rgb[1], mat2(1.0, 0, 0, 1.0),
                 &sceneObjs[1].rgb[2], &sceneObjs[1].brightness, mat2(1.0, 0, 0, 1.0) );
-    } else if(id==72) {			//[TFD]: I'm unsure of the rotation stuffs.
+    } else if(id==72) {
         setTool(&sceneObjs[1].angles[1], &sceneObjs[1].angles[0], mat2(-400, 0, 0, -200),
                 &sceneObjs[1].brightness, &lightSpread, mat2(1.0, 0, 0, -1.0) );
     } else if(id == 80) {
@@ -551,7 +552,7 @@ static void materialMenu(int id) {
 					&sceneObjs[currObject].rgb[2], &sceneObjs[currObject].brightness, mat2(1, 0, 0, 1) );
 	if(id==20) setTool(&sceneObjs[currObject].ambient, &sceneObjs[currObject].diffuse, mat2(1, 0, 0, 1),
 					&sceneObjs[currObject].specular, &sceneObjs[currObject].shine, mat2(1, 0, 0, 20) );
-	//[TFD]part C solution
+	// [TFD]: PART C. solution
 
 
 
@@ -647,12 +648,12 @@ void reshape( int width, int height ) {
     //     of the scene is visible across the width of the window.
 
     GLfloat nearDist = 0.02;	
-	//[TFD]Scaled by 0.1 for part D
-	if ( width < height ) {		//[TFD]part E solution, visibility does not decrease for width < height
+	// [TFD]: PART D. Scaled by 0.1
+	if ( width < height ) {		// [TFD]: PART E. solution, visibility does not decrease for width < height
 		projection = Frustum(-nearDist, nearDist,
 							-nearDist*(float)height/(float)width, nearDist*(float)height/(float)width,
-							0.2, 1000.0);	//[TFD]far scaled by 10 for part D
-	} else {								//[TFD]when height <= width as original
+							0.2, 1000.0);	// [TFD]: PART D. far scaled by 10
+	} else {								// [TFD]: When height <= width as original
 		projection = Frustum(-nearDist*(float)width/(float)height, nearDist*(float)width/(float)height,
 							-nearDist, nearDist,
 							0.2, 1000.0);
