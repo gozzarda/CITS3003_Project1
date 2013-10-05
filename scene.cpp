@@ -338,8 +338,13 @@ void init( void )
     sceneObjs[currObject].texId = 0; // Plain texture
     sceneObjs[currObject].brightness = 0.2; // The light's brightness is 5 times this (below).
 
-    addObject(rand() % numMeshes); // A test mesh
+    //addObject(rand() % numMeshes); // A test mesh
 
+	for ( int i = 0; i < 767; i++ ) {
+		addObject(rand() % numMeshes);
+		sceneObjs[currObject].loc = vec4((float)i, 0.0, 0.0, 1.0);
+	}
+	
     // We need to enable the depth test to discard fragments that
     // are behind previously drawn fragments for the same pixel.
     glEnable( GL_DEPTH_TEST );
@@ -446,20 +451,19 @@ display( void )
 // [GOZ]: PART J. Uses stencil buffer to find the object currently under the cursor
 // [GOZ]: Returns ID of said object or currObject if none (inc ground, lights)
 static int selectObject() {
-	int start = 0;
+	int power = 1;
 	int range = nObjects;
-	int g = (253+range)/255;	// [GOZ]: Groupsize required due to stencil buffer 8-bit limit
-	int objid = start;
+	int objid = 0;
 	glClearStencil(0);
 	glScissor(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1);
 	glEnable(GL_STENCIL_TEST);
 	glEnable(GL_SCISSOR_TEST);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	while ( g != 0 ) {	// [GOZ]: Recurses until groupsize is 0 (object has been found)
+	do {	// [GOZ]: Loop until range has refined to 0 (certain of choice), refining selected group each time
 		glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 		for ( int i = 0; i < range; i++ ) {
-			glStencilFunc(GL_ALWAYS, 1 + i/g, -1);
-			drawMesh(sceneObjs[i+start]);
+			glStencilFunc(GL_ALWAYS, 1 + i%255, -1);
+			drawMesh(sceneObjs[power*i+objid]);
 		}
 		GLuint stencil;
 		glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stencil);
@@ -467,11 +471,11 @@ static int selectObject() {
 			objid = currObject;
 			break;
 		}
-		objid += g*(stencil-1);
-		start = objid;
-		range = g;
-		g = (253+range)/255;
-	}
+		objid += power*(stencil-1);
+		if ( ((int)stencil)%255 < range%255 ) range += 255;
+		range /= 255;
+		power *= 255;
+	} while ( range );
 	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_SCISSOR_TEST);
 	CheckError();
