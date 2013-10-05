@@ -301,19 +301,9 @@ static void deleteObject(int objid) {
 void saveScene(void){
 	FILE * pFile;
 	pFile = fopen (saveFile,"w+");
-	if (pFile == NULL) {fputs ("File error",stderr); exit (1);}	// [TFD]: taken directly from http://www.cplusplus.com/reference/cstdio/fread/
-
-	fwrite(&viewDist, sizeof(float), 1, pFile);
-	fwrite(&camRotSidewaysDeg, sizeof(float), 1, pFile);
-	fwrite(&camRotUpAndOverDeg, sizeof(float), 1, pFile);
-	fwrite(&lightSpread, sizeof(float), 1, pFile);
-	fwrite(&nObjects, sizeof(int), 1, pFile);
-	fwrite(sceneObjs, sizeof(SceneObject), nObjects, pFile);
-	pFile = fopen (saveFile,"w+"); 		
-
 	// [TFD]: reference: http://www.cplusplus.com/reference/cstdio/fread/
 	if (pFile == NULL) {
-		fprintf (stderr, "File error"); 
+		fprintf (stderr, "File error\n"); 
 	} else {
 		fwrite(&viewDist, sizeof(float), 1, pFile);
 		fwrite(&camRotSidewaysDeg, sizeof(float), 1, pFile);
