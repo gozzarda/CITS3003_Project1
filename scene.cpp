@@ -19,7 +19,7 @@
 using namespace std;    // Import the C++ standard functions (e.g., min) 
 
 char saveFile[256];	//[TFD]:considering letting command line arguments include save location
-const int numSaves = 100;
+const int numSaves = 5;
 char saveDefault[] = "sceneSave";
 
 // IDs for the GLSL program and GLSL variables.
@@ -308,8 +308,21 @@ void saveScene(void){
 	fwrite(&lightSpread, sizeof(float), 1, pFile);
 	fwrite(&nObjects, sizeof(int), 1, pFile);
 	fwrite(sceneObjs, sizeof(SceneObject), nObjects, pFile);
+	pFile = fopen (saveFile,"w+"); 		
+
+	//[TFD]: reference: http://www.cplusplus.com/reference/cstdio/fread/
+	if (pFile == NULL) {
+		fprintf ("File error", stderr); 
+	} else {
+		fwrite(&viewDist, sizeof(float), 1, pFile);
+		fwrite(&camRotSidewaysDeg, sizeof(float), 1, pFile);
+		fwrite(&camRotUpAndOverDeg, sizeof(float), 1, pFile);
+		fwrite(&lightSpread, sizeof(float), 1, pFile);
+		fwrite(&nObjects, sizeof(int), 1, pFile);
+		fwrite(sceneObjs, sizeof(SceneObject), nObjects, pFile);
 		
-	fclose(pFile);
+		fclose(pFile);
+	}
 }
 
 void loadScene(void){
