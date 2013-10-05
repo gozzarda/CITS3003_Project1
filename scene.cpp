@@ -313,7 +313,7 @@ void saveScene(void){
 
 	// [TFD]: reference: http://www.cplusplus.com/reference/cstdio/fread/
 	if (pFile == NULL) {
-		fprintf ("File error", stderr); 
+		fprintf (stderr, "File error"); 
 	} else {
 		fwrite(&viewDist, sizeof(float), 1, pFile);
 		fwrite(&camRotSidewaysDeg, sizeof(float), 1, pFile);
