@@ -214,6 +214,8 @@ static void doRotate() {
 
 static void addObject(int id) {
 
+	if ( nObjects >= maxObjects ) return;	// [GOZ]: Don't add an object if we don't have memory for it
+
 	// [GOZ]: PART J. Raycasting to place object where click intersects with world plane.
 	mat4 invView = RotateY(-camRotSidewaysDeg) * RotateX(-camRotUpAndOverDeg) * Translate(0.0, 0.0, viewDist);
 	mat4 p = projection;	// [GOZ]: For legibility
@@ -276,6 +278,7 @@ static void addObject(int id) {
 
 // [GOZ]: PART J. Duplicate objects exactly, and set it as the current object
 static void duplicateObject(int objid) {
+	if ( nObjects >= maxObjects ) return;	// [GOZ]: Don't add an object if we don't have memory for it
 	sceneObjs[nObjects] = sceneObjs[objid];
 	currObject = nObjects++;
 	setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
@@ -287,17 +290,17 @@ static void duplicateObject(int objid) {
 static void deleteObject(int objid) {
 	if ( objid >= NUM_LG ) {
 		sceneObjs[objid] = sceneObjs[--nObjects];
-		currObject = -1;
-		doRotate();
+		currObject = -1;	// [GOZ]: Set no object currently selected
+		doRotate();			// [GOZ]: and go to camera mode
 		glutPostRedisplay();
 	}
 }
 
-//[TFD]: the save/load functions
+// [TFD]: the save/load functions
 void saveScene(void){
 	FILE * pFile;
 	pFile = fopen (saveFile,"w+");
-	if (pFile == NULL) {fputs ("File error",stderr); exit (1);} //[TFD]: taken directly from http://www.cplusplus.com/reference/cstdio/fread/
+	if (pFile == NULL) {fputs ("File error",stderr); exit (1);}	// [TFD]: taken directly from http://www.cplusplus.com/reference/cstdio/fread/
 
 	fwrite(&viewDist, sizeof(float), 1, pFile);
 	fwrite(&camRotSidewaysDeg, sizeof(float), 1, pFile);
@@ -377,9 +380,7 @@ void init( void )
     sceneObjs[currObject].texId = 0; // Plain texture
     sceneObjs[currObject].brightness = 0.2; // The light's brightness is 5 times this (below).
 
-    //addObject(rand() % numMeshes); // A test mesh
-
-	addObject(rand() % numMeshes);
+    addObject(rand() % numMeshes); // A test mesh
 	
     // We need to enable the depth test to discard fragments that
     // are behind previously drawn fragments for the same pixel.
@@ -526,7 +527,7 @@ static void objectMenu(int id) {
 
 static void texMenu(int id) {
 	currObject = selectObject();	// [GOZ]: Get object under cursor
-	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects
+	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects or no object is selected
     clearTool();
     if(currObject>=0) {
         sceneObjs[currObject].texId = id;
@@ -597,7 +598,7 @@ static int createArrayMenu(int size, const char menuEntries[][128], void(*menuFn
 
 static void materialMenu(int id) {
 	currObject = selectObject();	// [GOZ]: Get object under cursor
-	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects
+	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects or no object is selected
 	clearTool();
 	if(currObject<0) return;
 	if(id==10) setTool(&sceneObjs[currObject].rgb[0], &sceneObjs[currObject].rgb[1], mat2(1, 0, 0, 1),
@@ -613,7 +614,7 @@ static void materialMenu(int id) {
 
 static void mainmenu(int id) {
 	currObject = selectObject();	// [GOZ]: Get object under cursor
-	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects
+	if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects or no object is selected
     clearTool();
     if(id == 41 && currObject>=0) {
         setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
