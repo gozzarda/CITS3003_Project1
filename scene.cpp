@@ -18,6 +18,7 @@
 
 using namespace std;    // Import the C++ standard functions (e.g., min) 
 
+char saveFile[256];	//[TFD]:considering letting command line arguments include save location
 
 // IDs for the GLSL program and GLSL variables.
 GLuint shaderProgram; // The number identifying the GLSL shader program
@@ -289,6 +290,42 @@ static void deleteObject(int objid) {
 		glutPostRedisplay();
 	}
 }
+
+//[TFD]: the save/load functions
+void saveScene(void){
+	FILE * pFile;
+	pFile = fopen (saveFile,"w+");
+	if (pFile == NULL) {fputs ("File error",stderr); exit (1);} //[TFD]: taken directly from http://www.cplusplus.com/reference/cstdio/fread/
+
+	fwrite(&viewDist, sizeof(float), 1, pFile);
+	fwrite(&camRotSidewaysDeg, sizeof(float), 1, pFile);
+	fwrite(&camRotUpAndOverDeg, sizeof(float), 1, pFile);
+	fwrite(&lightSpread, sizeof(float), 1, pFile);
+	fwrite(&nObjects, sizeof(int), 1, pFile);
+	fwrite(sceneObjs, sizeof(SceneObject), nObjects, pFile);
+		
+	fclose(pFile);
+}
+
+void loadScene(void){
+	FILE * pFile;
+	pFile = fopen (saveFile,"r");
+
+	if (pFile!=NULL){
+		fread(&viewDist, sizeof(float), 1, pFile);
+		fread(&camRotSidewaysDeg, sizeof(float), 1, pFile);
+		fread(&camRotUpAndOverDeg, sizeof(float), 1, pFile);
+		fread(&lightSpread, sizeof(float), 1, pFile);
+		fread(&nObjects, sizeof(int), 1, pFile);
+		fread(sceneObjs, sizeof(SceneObject), nObjects, pFile);
+		
+		currObject = nObjects - 1;
+		doRotate();
+
+		fclose(pFile);
+	}
+}
+
 
 // ------ The init function
 
@@ -580,6 +617,8 @@ static void mainmenu(int id) {
 	if ( id == 95 ) duplicateObject(currObject);	// [GOZ]: Duplicate Object
 	if ( id == 96 ) deleteObject(currObject);		// [GOZ]: Delete Object
     if(id == 99) exit(0);
+	if(id == 101) saveScene();
+	if(id == 102) loadScene();
 }
 
 static void makeMenu() {
@@ -611,6 +650,8 @@ static void makeMenu() {
   glutAddMenuEntry("Duplicate", 95);
   glutAddMenuEntry("Delete", 96);
   glutAddMenuEntry("EXIT", 99);
+  glutAddMenuEntry("Save", 101);
+  glutAddMenuEntry("Load", 102);
   glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -678,6 +719,7 @@ void timer(int unused)
 
 char dirDefault1[] = "models-textures";
 char dirDefault2[] = "/cslinux/examples/CITS3003/project-files/models-textures";
+char saveDefault[] = "sceneSave.bin";
 
 void fileErr(char* fileName) {
     printf("Error reading file: %s\n", fileName);
@@ -695,13 +737,14 @@ int main( int argc, char* argv[] )
 
     // Set the models-textures directory, via the first argument or two defaults.
     if(argc>1)
-          strcpy(dataDir, argv[1]);
+		strcpy(dataDir, argv[1]);
     else if(opendir(dirDefault1))
-          strcpy(dataDir, dirDefault1);
+		strcpy(dataDir, dirDefault1);
     else if(opendir(dirDefault2))
-      strcpy(dataDir, dirDefault2);
+		strcpy(dataDir, dirDefault2);
     else fileErr(dirDefault1);
 
+	strcpy(saveFile, saveDefault);
 
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
