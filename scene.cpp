@@ -479,7 +479,7 @@ void display( void )
 	int stencil = 1;
 	for(int i=0; i<nObjects; i++) {
 		
-		if (stencil > 255) {
+		if (stencil > 255) {	// [GOZ]: PART J. Uses the stencil buffer to find what object is currently under the mouse and writes it to mouseObj
 			stencil = 1;
 			GLuint stin;
 			glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stin);
@@ -510,41 +510,6 @@ void display( void )
 }
 
 //--------------Menus
-
-// [GOZ]: PART J. Uses stencil buffer to find the object currently under the cursor
-// [GOZ]: Reference: http://en.wikibooks.org/wiki/OpenGL_Programming/Object_selection
-// [GOZ]: Returns ID of said object or currObject if none (inc ground, lights)
-/*static int selectObject() {
-	int power = 1;
-	int range = nObjects;
-	int objid = 0;
-	glClearStencil(0);
-	glEnable(GL_STENCIL_TEST);
-	glEnable(GL_SCISSOR_TEST);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	do {	// [GOZ]: Loop until range has refined to 0 (certain of choice), refining selected group each time
-		glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-		for ( int i = 0; i < range; i++ ) {
-			glStencilFunc(GL_ALWAYS, 1 + i%255, -1);
-			drawMesh(sceneObjs[power*i+objid]);
-		}
-		GLuint stencil;
-		glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stencil);
-		if (stencil == 0) {	// [GOZ]: Nothing under cursor
-			objid = currObject;
-			break;
-		}
-		objid += power*(stencil-1);
-		if ( ((int)stencil)%255 < range%255 ) range += 255;
-		range /= 255;
-		power *= 255;
-	} while ( range );
-	glDisable(GL_STENCIL_TEST);
-	glDisable(GL_SCISSOR_TEST);
-	CheckError();
-	if ( objid < NUM_LG ) objid = currObject; // [GOZ]: Ignore ground and lights
-	return objid;
-}*/
 
 static inline void selectObject() {
 	if ( mouseObj >= NUM_LG ) currObject = mouseObj;	// [GOZ]: PART J. Select object under mouse, ignore lights and ground
