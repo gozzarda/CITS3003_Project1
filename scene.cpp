@@ -484,7 +484,7 @@ void display( void )
 			GLuint stin;
 			glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stin);
 			glClear( GL_STENCIL_BUFFER_BIT );
-			mouseObj = 255*(i/255) + stin - 1;
+			if (stin) mouseObj = ((i-1)/255)*255 + stin - 1;
 		}
 		glStencilFunc(GL_ALWAYS, stencil++, -1);
 		
@@ -501,9 +501,9 @@ void display( void )
 	}
 	GLuint stin;
 	glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stin);
-	mouseObj = 255*((nObjects-1)/255) + stin - 1;
+	if (stin) mouseObj = 255*((nObjects-1)/255) + stin - 1;
 	
-	fprintf(stderr, "currObject: %d\tmouseObj: %d\n", currObject, mouseObj);
+	//fprintf(stderr, "currObject: %d\tmouseObj: %d\n", currObject, mouseObj);	// [GOZ]: Spams currObject and mouseObj to stderr
 
 	glutSwapBuffers();
 
@@ -546,14 +546,20 @@ void display( void )
 	return objid;
 }*/
 
+static inline void selectObject() {
+	if ( mouseObj >= NUM_LG ) currObject = mouseObj;	// [GOZ]: PART J. Select object under mouse, ignore lights and ground
+	else if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects or no object is selected
+	doRotate();	// [GOZ]: Set current tool to camera.
+}
+
 static void objectMenu(int id) {
 	clearTool();
 	addObject(id);
 }
 
 static void texMenu(int id) {
-	if ( mouseObj > NUM_LG ) currObject = mouseObj;	// [GOZ]: PART J. Select object under mouse, ignore lights and ground
-	else if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects or no object is selected
+	selectObject();
+	
 	clearTool();
 	if(currObject>=0) {
 		sceneObjs[currObject].texId = id;
@@ -623,8 +629,8 @@ static int createArrayMenu(int size, const char menuEntries[][128], void(*menuFn
 }
 
 static void materialMenu(int id) {
-	if ( mouseObj > NUM_LG ) currObject = mouseObj;	// [GOZ]: PART J. Select object under mouse, ignore lights and ground
-	else if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects or no object is selected
+	selectObject();
+	
 	clearTool();
 	if(currObject<0) return;
 	if(id==10) setTool(&sceneObjs[currObject].rgb[0], &sceneObjs[currObject].rgb[1], mat2(1, 0, 0, 1),
@@ -639,8 +645,8 @@ static void materialMenu(int id) {
 }
 
 static void mainmenu(int id) {
-	if ( mouseObj > NUM_LG ) currObject = mouseObj;	// [GOZ]: PART J. Select object under mouse, ignore lights and ground
-	else if ( currObject < NUM_LG ) return;	// [GOZ]: If there are no objects or no object is selected
+	selectObject();
+	
 	clearTool();
 	if(id == 41 && currObject>=0) {
 		setTool(&sceneObjs[currObject].loc[0], &sceneObjs[currObject].loc[2], camRotZ(),
