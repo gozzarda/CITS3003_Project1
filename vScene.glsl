@@ -19,11 +19,10 @@ uniform mat4 Projection;
 void main()
 {
 	//[TFD]: part D.A2
-	mat4 boneTransform = boneWeights[0] * boneTransforms[boneIDs[0]];
-
-	for(int i = 1; i < 64; i++) {
-		boneTransform += boneWeights[0] * boneTransforms[boneIDs[0]];
-	}
+	mat4 boneTransform = boneWeights[0] * boneTransforms[boneIDs[0]]	+
+						 boneWeights[1] * boneTransforms[boneIDs[1]]	+
+						 boneWeights[2] * boneTransforms[boneIDs[2]]	+
+						 boneWeights[3] * boneTransforms[boneIDs[3]];
 
 	//[TFD]: part D.A3, 4th element of vNormal should be 0, as with normalTransform
 	vec4 positionTransform = boneTransform * vPosition;
