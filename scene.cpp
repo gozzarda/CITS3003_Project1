@@ -76,6 +76,8 @@ typedef struct {
 	int meshId;
 	int texId;
 	float texScale;
+	clock_t animStart;	// [TFD]: Records time of object creation
+	float FPS;			// [TFD]: The number of animation frames per second
 } SceneObject;
 
 const int maxObjects = 1024; // Scenes with more than 1024 objects seem unlikely
@@ -283,8 +285,11 @@ static void addObject(int id) {
 	}
 	sceneObjs[nObjects].loc[3] = 1.0;
 
+
 	if(id!=0 && id!=55)
 		sceneObjs[nObjects].scale = 0.005;
+	sceneObjs[nObjects].animStart = clock();		// [TFD]: Not sure if it matters if not assigned for lights and ground
+	sceneObjs[nObjects].FPS = 20.0;
 
 	sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
 	sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 1.0;	
@@ -470,8 +475,11 @@ void drawMesh(SceneObject sceneObj) {
 
     // get boneTransforms for the first (0th) animation at the given time (a float measured in frames)
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
-//    calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0, <POSE_TIME>, boneTransforms);
-	calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0, 1.0, boneTransforms);
+
+	float numFrames = 40.0;	// [TFD]: Will make this dynamic later
+		// [TFD]: takes current time - animation start time, multiplies by FPS, takes mod with numFrames
+	float POSE_TIME = fmod (sceneObj.FPS * (clock() - sceneObj.animStart) / CLOCKS_PER_SEC, numFrames);
+	calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0, POSE_TIME, boneTransforms);
     glUniformMatrix4fv(boneTransformsU, nBones, GL_TRUE, (const GLfloat *)boneTransforms);
 	
 	glDrawElements(GL_TRIANGLES, meshes[sceneObj.meshId]->mNumFaces * 3, GL_UNSIGNED_INT, NULL); CheckError();
