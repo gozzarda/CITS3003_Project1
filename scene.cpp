@@ -76,8 +76,10 @@ typedef struct {
 	int meshId;
 	int texId;
 	float texScale;
-	clock_t animStart;	// [TFD]: Records time of object creation
+	float animStart;	// [TFD]: Records time of object creation
 	float FPS;			// [TFD]: The number of animation frames per second
+	float moveSpeed;	// [TFD]: The speed an animated object will travel
+	float moveDist; 	// [TFD]: twice the distance an animated object will travel before returning
 } SceneObject;
 
 const int maxObjects = 1024; // Scenes with more than 1024 objects seem unlikely
@@ -87,7 +89,10 @@ int nObjects=0; // How many objects are currenly in the scene.
 int currObject=-1; // The current object
 int mouseObj = -1;	// [GOZ]: PART J. The object currently under the mouse, -1 is no object
 
-
+// [TFD]: Stores the pause time and the resume time for animations
+float animationPause = 0.0;
+float POSE_TIME = 0.0;
+	
 //------------------------------------------------------------
 // Loads a texture by number, and binds it for later use.  
 void loadTextureIfNotAlreadyLoaded(int i) {
@@ -284,13 +289,22 @@ static void addObject(int id) {
 		}
 	}
 	sceneObjs[nObjects].loc[3] = 1.0;
+	sceneObjs[nObjects].moveSpeed = 0.0;
+	sceneObjs[nObjects].moveDist = 0.0;
+	sceneObjs[nObjects].FPS = 0.0;
+	sceneObjs[nObjects].animStart = 0.0;
 
 
 	if(id!=0 && id!=55)
 		sceneObjs[nObjects].scale = 0.005;
-	sceneObjs[nObjects].animStart = clock();		// [TFD]: Not sure if it matters if not assigned for lights and ground
-	sceneObjs[nObjects].FPS = 20.0;
-
+	
+	if(id > 55) {
+		sceneObjs[nObjects].animStart = clock();
+		sceneObjs[nObjects].FPS = 40.0;
+		sceneObjs[nObjects].moveSpeed = 1.0;
+		sceneObjs[nObjects].moveDist = 5.0;
+	}
+	
 	sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
 	sceneObjs[nObjects].rgb[2] = 0.7; sceneObjs[nObjects].brightness = 1.0;	
 
@@ -476,12 +490,9 @@ void drawMesh(SceneObject sceneObj) {
     // get boneTransforms for the first (0th) animation at the given time (a float measured in frames)
     mat4 boneTransforms[nBones];     // was: mat4 boneTransforms[mesh->mNumBones];
 
-	float numFrames = 40.0;	// [TFD]: Will make this dynamic later
-		// [TFD]: takes current time - animation start time, multiplies by FPS, takes mod with numFrames
-	float POSE_TIME = fmod (sceneObj.FPS * (clock() - sceneObj.animStart) / CLOCKS_PER_SEC, numFrames);
 	calculateAnimPose(meshes[sceneObj.meshId], scenes[sceneObj.meshId], 0, POSE_TIME, boneTransforms);
     glUniformMatrix4fv(boneTransformsU, nBones, GL_TRUE, (const GLfloat *)boneTransforms);
-	
+
 	glDrawElements(GL_TRIANGLES, meshes[sceneObj.meshId]->mNumFaces * 3, GL_UNSIGNED_INT, NULL); CheckError();
 }
 
@@ -542,8 +553,42 @@ void display( void )
 		glUniform3fv( glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb );
 		glUniform1f( glGetUniformLocation(shaderProgram, "Shininess"), so.shine ); CheckError();
 
-		drawMesh(sceneObjs[i]);
+		POSE_TIME = 0.0;
+		
+		vec4 displacement = 0.0;
+		
+		if ( sceneObjs[i].meshId > 55) {
+			float numFrames = 40.0;	// [TFD]: Will make this dynamic later
+			float elapsedTime = 0.0;
+						
+			if (sceneObjs[i].FPS < 0.0) sceneObjs[i].FPS = 0.0;	// [TFD]: Avoid -ve FPS
+			if (sceneObjs[i].moveDist <= 0.0) sceneObjs[i].moveDist = 0.1;	// [TFD]: Avoid dividing by 0
+			if (sceneObjs[i].moveSpeed <= 0.0) sceneObjs[i].moveSpeed = 0.1;
+			
+			if (animationPause != 0.0) {	// [TFD]: If animation is paused
+				// [TFD]: Time since animation began in seconds (at time of pause)
+				elapsedTime = (animationPause - sceneObjs[i].animStart) / CLOCKS_PER_SEC;
+			} else {
+				elapsedTime = (clock() - sceneObjs[i].animStart) / CLOCKS_PER_SEC;	// [TFD]: Time since animation began in seconds
+			}
 
+			float cycleProgress;
+			float period = sceneObjs[i].moveDist / sceneObjs[i].moveSpeed;		// [TFD]: The time taken to complete one movement cycle
+			cycleProgress = fmod (elapsedTime, period) / period;	// [TFD]: How far through the movement cycle the object is
+			if (cycleProgress > 0.5)	// [TFD]: If more than halfway through cycle reverse direction
+				cycleProgress = 1.0 - cycleProgress;
+			displacement = RotateZ(sceneObjs[i].angles[2]) * RotateY(sceneObjs[i].angles[1]) *
+							RotateX(sceneObjs[i].angles[0]) * vec4( 0.0, 0.0, - cycleProgress * sceneObjs[i].moveDist, 0.0);
+			sceneObjs[i].loc += displacement;
+
+			POSE_TIME = fmod (sceneObjs[i].FPS * elapsedTime, numFrames);	// [TFD]: Elapsed time is multiplied by animation frames per second
+
+		}
+				
+		drawMesh(sceneObjs[i]);
+		
+		sceneObjs[i].loc -= displacement;
+		
 	}
 	GLuint stin;
 	glReadPixels(mouseX, glutGet(GLUT_WINDOW_HEIGHT) - mouseY - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &stin);
@@ -669,6 +714,19 @@ static void mainmenu(int id) {
 		setTool(&sceneObjs[currObject].angles[1], &sceneObjs[currObject].angles[0], mat2(400, 0, 0, -400),
 				&sceneObjs[currObject].angles[2], &sceneObjs[currObject].texScale, mat2(400, 0, 0, 6) );
 	}
+	if(id == 60 && currObject>=0) {		// [TFD]: Sets FPS and MoveDistance
+		setTool(&sceneObjs[currObject].moveSpeed, &sceneObjs[currObject].FPS, mat2(10, 0, 0, 100),
+				&sceneObjs[currObject].moveDist, &sceneObjs[currObject].moveDist, mat2(0, 0, 0, 100) );
+	}
+	if ( id == 61 && currObject>=0) sceneObjs[currObject].animStart = clock();	// [TFD]: reset object's animation
+	if ( id == 62 ) animationPause = clock();	// [TFD]: Pause all animation
+	if ( id == 63 ) {
+		int animationResume = clock();
+		for (int i = 0; i < nObjects; i++) {
+			sceneObjs[i].animStart += animationResume - animationPause;
+		}
+		animationPause = 0.0;
+	}
 	if ( id == 95 ) duplicateObject(currObject);	// [GOZ]: Duplicate Object
 	if ( id == 96 ) deleteObject(currObject);		// [GOZ]: Delete Object
 	if(id == 99) exit(0);
@@ -701,11 +759,15 @@ static void makeMenu() {
 	glutAddSubMenu("Add object", objectId);
 	glutAddMenuEntry("Position/Scale", 41);
 	glutAddMenuEntry("Rotation/Texture Scale", 55);
+	glutAddMenuEntry("FPS/Movement", 60);
+	glutAddMenuEntry("Reset object animation", 61);
 	glutAddSubMenu("Material", materialMenuId);
 	glutAddSubMenu("Texture",texMenuId);
 	glutAddSubMenu("Ground Texture",groundMenuId);
 	glutAddSubMenu("Lights",lightMenuId);
 	glutAddMenuEntry("Duplicate", 95);
+	glutAddMenuEntry("Pause all animation", 62);
+	glutAddMenuEntry("Resume all animation", 63);
 	glutAddSubMenu("Save", saveMenuID);
 	glutAddSubMenu("Load", loadMenuID);
 	glutAddMenuEntry("Delete", 96);
