@@ -252,8 +252,8 @@ static void addObject(int id) {
 	mat4 p = projection;	// [GOZ]: For legibility
 	mat4 invProj = mat4(1.0/p[0][0], 0.0, 0.0, 0.0,		// [GOZ]: Inverse of the projection matrix
 			0.0, 1.0/p[1][1], 0.0, 0.0,
-			0.0, 0.0, 0.0, -1.0,
-			p[0][2]/p[0][0], p[1][2]/p[1][1], -1.0, -p[2][2]);
+			0.0, 0.0, 0.0, 1.0/p[2][3],
+			p[0][2]/p[0][0], p[1][2]/p[1][1], -1.0, p[2][2]/p[2][3]);
 
 	// [GOZ]: Run through pipeline in reverse to convert 2D click to 4D world co-ords
 	vec4 mouseRay = vec4(2.0 * currRawX() - 1.0, 2.0 * currRawY() - 1.0, -1.0, 1.0);
