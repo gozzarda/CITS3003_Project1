@@ -16,6 +16,7 @@
 #include "gnatidread2.h"	// [TFD]: Part D.B2, download at http://undergraduate.csse.uwa.edu.au/units/CITS3003/gnatidread2.h
 
 #define NUM_LG 3	// [GOZ]: Number of Lights/Grounds
+#define PI 3.14159265359 // [TFD]: Pi for use with sin functions
 
 using namespace std;    // Import the C++ standard functions (e.g., min) 
 
@@ -77,7 +78,7 @@ typedef struct {
 	int texId;
 	float texScale;
 	unsigned int animStart;	// [TFD]: Records time of object creation
-	float FPS;			// [TFD]: The number of animation frames per second
+	float FPC;			// [TFD]: The number of full animations per movement cycle
 	float moveSpeed;	// [TFD]: The speed an animated object will travel
 	float moveDist; 	// [TFD]: twice the distance an animated object will travel before returning
 	int numFrames;
@@ -292,7 +293,7 @@ static void addObject(int id) {
 	sceneObjs[nObjects].loc[3] = 1.0;
 	sceneObjs[nObjects].moveSpeed = 0.0;
 	sceneObjs[nObjects].moveDist = 0.0;
-	sceneObjs[nObjects].FPS = 0.0;
+	sceneObjs[nObjects].FPC = 0.0;
 	sceneObjs[nObjects].animStart = 0.0;
 
 
@@ -301,7 +302,7 @@ static void addObject(int id) {
 	
 	if(id > 55) {
 		sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
-		sceneObjs[nObjects].FPS = 40.0;
+		sceneObjs[nObjects].FPC = 3.0;
 		sceneObjs[nObjects].moveSpeed = 1.0;
 		sceneObjs[nObjects].moveDist = 5.0;
 		sceneObjs[nObjects].numFrames = 40;
@@ -565,7 +566,7 @@ void display( void )
 		if ( sceneObjs[i].meshId > 55) {
 			float elapsedTime = 0.0;
 						
-			if (sceneObjs[i].FPS < 0.0) sceneObjs[i].FPS = 0.0;	// [TFD]: Avoid -ve FPS
+			if (sceneObjs[i].FPC < 0.0) sceneObjs[i].FPC = 0.0;	// [TFD]: Avoid -ve FPC
 			if (sceneObjs[i].moveDist <= 0.0) sceneObjs[i].moveDist = 0.1;	// [TFD]: Avoid dividing by 0
 			if (sceneObjs[i].moveSpeed <= 0.0) sceneObjs[i].moveSpeed = 0.1;
 			
@@ -573,18 +574,18 @@ void display( void )
 				// [TFD]: Time since animation began in seconds (at time of pause)
 				elapsedTime = float ( animationPause - sceneObjs[i].animStart ) / 1000.0;
 			} else {
-				elapsedTime =  float ( glutGet(GLUT_ELAPSED_TIME) - sceneObjs[i].animStart ) / 1000.0;	// [TFD]: Time since animation began in seconds
+				// [TFD]: Time since animation began in seconds
+				elapsedTime =  float ( glutGet(GLUT_ELAPSED_TIME) - sceneObjs[i].animStart ) / 1000.0;	
 			}
-		
-			POSE_TIME = fmod (sceneObjs[i].FPS * elapsedTime, sceneObjs[i].numFrames);	// [TFD]: Elapsed time is multiplied by animation frames per second
-			float cycleProgress;
 			float period = sceneObjs[i].moveDist / sceneObjs[i].moveSpeed;		// [TFD]: The time taken to complete one movement cycle
-			cycleProgress = fmod (elapsedTime, period) / period;	// [TFD]: How far through the movement cycle the object is
-			if (cycleProgress > 0.5) {	// [TFD]: If more than halfway through cycle reverse direction
-				cycleProgress = 1.0 - cycleProgress;
-			}
-			displacement = RotateZ(sceneObjs[i].angles[2]) * RotateY(sceneObjs[i].angles[1]) *
-							RotateX(sceneObjs[i].angles[0]) * vec4( 0.0, 0.0, - cycleProgress * sceneObjs[i].moveDist, 0.0);
+			
+			// [TFD]: POSE_TIME ranges from 0 to numFrames, looping FPC times in one half movement cycle
+			POSE_TIME = fmod((0.5 + 0.5 * sin(elapsedTime / period * 2 * PI))* sceneObjs[i].FPC * sceneObjs[i].numFrames, sceneObjs[i].numFrames);
+			// [TFD]: displacement ranges from 0.5 moveDist to -0.5 moveDist in the direction the object is facing
+			displacement =  RotateZ(sceneObjs[i].angles[2]) * RotateY(sceneObjs[i].angles[1]) * RotateX(sceneObjs[i].angles[0]) * 
+						vec4( 0.0, 0.0, - 0.5 * sceneObjs[i].moveDist * sin(elapsedTime / period * 2 * PI), 0.0);
+			
+			// [TFD]: The displacement is temporarily added to the object's location
 			sceneObjs[i].loc += displacement;
 			
 
@@ -592,6 +593,7 @@ void display( void )
 				
 		drawMesh(sceneObjs[i]);
 		
+			// [TFD]: The objects location is returned to its reset for the next display call
 		sceneObjs[i].loc -= displacement;
 		
 	}
@@ -719,9 +721,9 @@ static void mainmenu(int id) {
 		setTool(&sceneObjs[currObject].angles[1], &sceneObjs[currObject].angles[0], mat2(400, 0, 0, -400),
 				&sceneObjs[currObject].angles[2], &sceneObjs[currObject].texScale, mat2(400, 0, 0, 6) );
 	}
-	if(id == 60 && currObject>=0) {		// [TFD]: Sets FPS and MoveDistance
-		setTool(&sceneObjs[currObject].moveSpeed, &sceneObjs[currObject].FPS, mat2(10, 0, 0, 100),
-				&sceneObjs[currObject].moveDist, &sceneObjs[currObject].moveDist, mat2(0, 0, 0, 100) );
+	if(id == 60 && currObject>=0) {		// [TFD]: Sets FPC and MoveDistance
+		setTool(&sceneObjs[currObject].moveSpeed, &sceneObjs[currObject].FPC, mat2(10, 0, 0, 5),
+				&sceneObjs[currObject].moveDist, &sceneObjs[currObject].moveDist, mat2(0, 0, 0, 10) );
 	}
 	if ( id == 61 && currObject>=0) sceneObjs[currObject].animStart = glutGet(GLUT_ELAPSED_TIME);	// [TFD]: reset object's animation
 	if ( id == 62 ) animationPause = glutGet(GLUT_ELAPSED_TIME);	// [TFD]: Pause all animation
@@ -764,7 +766,7 @@ static void makeMenu() {
 	glutAddSubMenu("Add object", objectId);
 	glutAddMenuEntry("Position/Scale", 41);
 	glutAddMenuEntry("Rotation/Texture Scale", 55);
-	glutAddMenuEntry("FPS/Movement", 60);
+	glutAddMenuEntry("FPC/Movement", 60);
 	glutAddMenuEntry("Reset object animation", 61);
 	glutAddSubMenu("Material", materialMenuId);
 	glutAddSubMenu("Texture",texMenuId);
