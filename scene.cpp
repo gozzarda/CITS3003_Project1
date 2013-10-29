@@ -76,10 +76,11 @@ typedef struct {
 	int meshId;
 	int texId;
 	float texScale;
-	float animStart;	// [TFD]: Records time of object creation
+	unsigned int animStart;	// [TFD]: Records time of object creation
 	float FPS;			// [TFD]: The number of animation frames per second
 	float moveSpeed;	// [TFD]: The speed an animated object will travel
 	float moveDist; 	// [TFD]: twice the distance an animated object will travel before returning
+	int numFrames;
 } SceneObject;
 
 const int maxObjects = 1024; // Scenes with more than 1024 objects seem unlikely
@@ -90,7 +91,7 @@ int currObject=-1; // The current object
 int mouseObj = -1;	// [GOZ]: PART J. The object currently under the mouse, -1 is no object
 
 // [TFD]: Stores the pause time and the resume time for animations
-float animationPause = 0.0;
+unsigned int animationPause = 0;
 float POSE_TIME = 0.0;
 	
 //------------------------------------------------------------
@@ -299,10 +300,14 @@ static void addObject(int id) {
 		sceneObjs[nObjects].scale = 0.005;
 	
 	if(id > 55) {
-		sceneObjs[nObjects].animStart = clock();
+		sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
 		sceneObjs[nObjects].FPS = 40.0;
 		sceneObjs[nObjects].moveSpeed = 1.0;
 		sceneObjs[nObjects].moveDist = 5.0;
+		sceneObjs[nObjects].numFrames = 40;
+	}
+	if(id == 58){
+		sceneObjs[nObjects].numFrames = 64;
 	}
 	
 	sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
@@ -345,7 +350,7 @@ static void deleteObject(int objid) {
 }
 
 // [TFD]: the save/load functions
-void saveScene(void){
+void saveSceneToFile(void){
 	FILE * pFile;
 	pFile = fopen (saveFile,"w+");
 	// [TFD]: reference: http://www.cplusplus.com/reference/cstdio/fread/
@@ -363,7 +368,7 @@ void saveScene(void){
 	}
 }
 
-void loadScene(void){
+void loadSceneFromFile(void){
 	FILE * pFile;
 	pFile = fopen (saveFile,"r");
 
@@ -558,30 +563,30 @@ void display( void )
 		vec4 displacement = 0.0;
 		
 		if ( sceneObjs[i].meshId > 55) {
-			float numFrames = 40.0;	// [TFD]: Will make this dynamic later
 			float elapsedTime = 0.0;
 						
 			if (sceneObjs[i].FPS < 0.0) sceneObjs[i].FPS = 0.0;	// [TFD]: Avoid -ve FPS
 			if (sceneObjs[i].moveDist <= 0.0) sceneObjs[i].moveDist = 0.1;	// [TFD]: Avoid dividing by 0
 			if (sceneObjs[i].moveSpeed <= 0.0) sceneObjs[i].moveSpeed = 0.1;
 			
-			if (animationPause != 0.0) {	// [TFD]: If animation is paused
+			if (animationPause != 0) {	// [TFD]: If animation is paused
 				// [TFD]: Time since animation began in seconds (at time of pause)
-				elapsedTime = (animationPause - sceneObjs[i].animStart) / CLOCKS_PER_SEC;
+				elapsedTime = float ( animationPause - sceneObjs[i].animStart ) / 1000.0;
 			} else {
-				elapsedTime = (clock() - sceneObjs[i].animStart) / CLOCKS_PER_SEC;	// [TFD]: Time since animation began in seconds
+				elapsedTime =  float ( glutGet(GLUT_ELAPSED_TIME) - sceneObjs[i].animStart ) / 1000.0;	// [TFD]: Time since animation began in seconds
 			}
-
+		
+			POSE_TIME = fmod (sceneObjs[i].FPS * elapsedTime, sceneObjs[i].numFrames);	// [TFD]: Elapsed time is multiplied by animation frames per second
 			float cycleProgress;
 			float period = sceneObjs[i].moveDist / sceneObjs[i].moveSpeed;		// [TFD]: The time taken to complete one movement cycle
 			cycleProgress = fmod (elapsedTime, period) / period;	// [TFD]: How far through the movement cycle the object is
-			if (cycleProgress > 0.5)	// [TFD]: If more than halfway through cycle reverse direction
+			if (cycleProgress > 0.5) {	// [TFD]: If more than halfway through cycle reverse direction
 				cycleProgress = 1.0 - cycleProgress;
+			}
 			displacement = RotateZ(sceneObjs[i].angles[2]) * RotateY(sceneObjs[i].angles[1]) *
 							RotateX(sceneObjs[i].angles[0]) * vec4( 0.0, 0.0, - cycleProgress * sceneObjs[i].moveDist, 0.0);
 			sceneObjs[i].loc += displacement;
-
-			POSE_TIME = fmod (sceneObjs[i].FPS * elapsedTime, numFrames);	// [TFD]: Elapsed time is multiplied by animation frames per second
+			
 
 		}
 				
@@ -631,13 +636,13 @@ static void groundMenu(int id) {
 
 static void saveMenu(int id) {
 	sprintf(saveFile, "%s%d.sav", saveFile, id);
-	saveScene();
+	saveSceneToFile();
 	strcpy(saveFile, saveDefault);
 }
 
 static void loadMenu(int id) {
 	sprintf(saveFile, "%s%d.sav", saveFile, id);
-	loadScene();
+	loadSceneFromFile();
 	strcpy(saveFile, saveDefault);
 }
 
@@ -718,14 +723,14 @@ static void mainmenu(int id) {
 		setTool(&sceneObjs[currObject].moveSpeed, &sceneObjs[currObject].FPS, mat2(10, 0, 0, 100),
 				&sceneObjs[currObject].moveDist, &sceneObjs[currObject].moveDist, mat2(0, 0, 0, 100) );
 	}
-	if ( id == 61 && currObject>=0) sceneObjs[currObject].animStart = clock();	// [TFD]: reset object's animation
-	if ( id == 62 ) animationPause = clock();	// [TFD]: Pause all animation
+	if ( id == 61 && currObject>=0) sceneObjs[currObject].animStart = glutGet(GLUT_ELAPSED_TIME);	// [TFD]: reset object's animation
+	if ( id == 62 ) animationPause = glutGet(GLUT_ELAPSED_TIME);	// [TFD]: Pause all animation
 	if ( id == 63 ) {
-		int animationResume = clock();
+		unsigned int animationResume = glutGet(GLUT_ELAPSED_TIME);
 		for (int i = 0; i < nObjects; i++) {
 			sceneObjs[i].animStart += animationResume - animationPause;
 		}
-		animationPause = 0.0;
+		animationPause = 0;
 	}
 	if ( id == 95 ) duplicateObject(currObject);	// [GOZ]: Duplicate Object
 	if ( id == 96 ) deleteObject(currObject);		// [GOZ]: Delete Object
