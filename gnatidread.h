@@ -9,6 +9,9 @@ char dataDir[256];  // Stores the path to the models-textures folder.
 const int numTextures = 31; 
 const int numMeshes = 59;	// [TFD]: part D.B1
 
+float meshIDFPC[3] = {3.0,3.0,1.5};
+int meshIDnumFrames[3] = {40,40,64};
+
 void fail(const char *msg1, char *msg2) {
         fprintf(stderr, "%s %s\n", msg1, msg2);
         exit(1);

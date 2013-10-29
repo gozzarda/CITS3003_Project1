@@ -302,13 +302,10 @@ static void addObject(int id) {
 	
 	if(id > 55) {
 		sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
-		sceneObjs[nObjects].FPC = 3.0;
 		sceneObjs[nObjects].moveSpeed = 1.0;
 		sceneObjs[nObjects].moveDist = 5.0;
-		sceneObjs[nObjects].numFrames = 40;
-	}
-	if(id == 58){
-		sceneObjs[nObjects].numFrames = 64;
+		sceneObjs[nObjects].FPC = meshIDFPC[id - 56];
+		sceneObjs[nObjects].numFrames = meshIDnumFrames[id - 56];
 	}
 	
 	sceneObjs[nObjects].rgb[0] = 0.7; sceneObjs[nObjects].rgb[1] = 0.7;
@@ -565,7 +562,7 @@ void display( void )
 		
 		if ( sceneObjs[i].meshId > 55) {
 			float elapsedTime = 0.0;
-						
+
 			if (sceneObjs[i].FPC < 0.0) sceneObjs[i].FPC = 0.0;	// [TFD]: Avoid -ve FPC
 			if (sceneObjs[i].moveDist <= 0.0) sceneObjs[i].moveDist = 0.1;	// [TFD]: Avoid dividing by 0
 			if (sceneObjs[i].moveSpeed <= 0.0) sceneObjs[i].moveSpeed = 0.1;
