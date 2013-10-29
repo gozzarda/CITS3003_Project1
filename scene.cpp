@@ -385,6 +385,8 @@ void init( void )
 	// Initialize the vertex position attribute from the vertex shader    
 	vPosition = glGetAttribLocation( shaderProgram, "vPosition" );
 	vNormal = glGetAttribLocation( shaderProgram, "vNormal" ); CheckError();
+	vBoneIDs = glGetAttribLocation(shaderProgram, "boneIDs"); CheckError();		// [TFD]: Part D.B3
+	vBoneWeights = glGetAttribLocation(shaderProgram, "boneWeights"); CheckError();
 
 	// Likewise, initialize the vertex texture coordinates attribute.  
 	vTexCoord = glGetAttribLocation( shaderProgram, "vTexCoord" ); CheckError();
@@ -393,8 +395,6 @@ void init( void )
 	modelViewU = glGetUniformLocation(shaderProgram, "ModelView");
 
 	// [TFD]: Part D.B3
-	vBoneIDs = glGetUniformLocation(shaderProgram, "boneIDs");
-	vBoneWeights = glGetUniformLocation(shaderProgram, "boneWeights");
 	boneTransformsU = glGetUniformLocation(shaderProgram, "boneTransforms");
 	
 	// Objects 0, and 1 are the ground and the first light.

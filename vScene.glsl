@@ -25,7 +25,6 @@ void main()
 						 boneWeights[3] * boneTransforms[boneIDs[3]];
 
 	//[TFD]: part D.A3, 4th element of vNormal should be 0, as with normalTransform
-
 	vec4 positionTransform = boneTransform * vPosition;
 	vec3 normalTransform = mat3 ( boneTransform ) * vNormal;
 	
