@@ -7,7 +7,7 @@
 
 char dataDir[256];  // Stores the path to the models-textures folder.
 const int numTextures = 31; 
-const int numMeshes = 58;	// [TFD]: part D.B1
+const int numMeshes = 59;	// [TFD]: part D.B1
 
 void fail(const char *msg1, char *msg2) {
         fprintf(stderr, "%s %s\n", msg1, msg2);
@@ -106,7 +106,7 @@ char objectMenuEntries[numMeshes][128] = {
   "36 Chihuahua", "37 Sabre-toothed Tiger", "38 Lioness", "39 Fish", "40 Horse (head down)", 
   "41 Horse (head up)", "42 Skull", "43 Fighter Jet I", "44 Toad", "45 Convertible", 
   "46 Porsche II", "47 Hare", "48 Vintage Car", "49 Fighter Jet II", "50 Gargoyle", 
-  "51 Chef", "52 Parasaurolophus", "53 Rooster", "54 T-rex", "55 Sphere", "56 Gingerbread Man", "57 Monkey Head"
+  "51 Chef", "52 Parasaurolophus", "53 Rooster", "54 T-rex", "55 Sphere", "56 Gingerbread Man", "57 Monkey Head", "58 Gus Can-Can"
 };
 	// [TFD]: part D.B1, model 57 provided http://undergraduate.csse.uwa.edu.au/units/CITS3003/model57.x
 
