@@ -301,7 +301,12 @@ static void addObject(int id) {
 		sceneObjs[nObjects].scale = 0.005;
 	
 	if(id > 55) {
-		sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
+		if(animationPause == 0){	// [TFD]: if animation is not paused begin animation immediately
+			sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
+		} else {			// [TFD]: Else begin animation on resume
+			sceneObjs[nObjects].animStart = animationPause;
+		}
+		
 		sceneObjs[nObjects].moveSpeed = 1.0;
 		sceneObjs[nObjects].moveDist = 5.0;
 		sceneObjs[nObjects].FPC = meshIDFPC[id - 56];
@@ -556,7 +561,7 @@ void display( void )
 		glUniform3fv( glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb );
 		glUniform1f( glGetUniformLocation(shaderProgram, "Shininess"), so.shine ); CheckError();
 
-		POSE_TIME = 0.0;
+		POSE_TIME = 1.0;
 		
 		vec4 displacement = 0.0;
 		
@@ -722,7 +727,13 @@ static void mainmenu(int id) {
 		setTool(&sceneObjs[currObject].moveSpeed, &sceneObjs[currObject].FPC, mat2(10, 0, 0, 5),
 				&sceneObjs[currObject].moveDist, &sceneObjs[currObject].moveDist, mat2(0, 0, 0, 10) );
 	}
-	if ( id == 61 && currObject>=0) sceneObjs[currObject].animStart = glutGet(GLUT_ELAPSED_TIME);	// [TFD]: reset object's animation
+	if ( id == 61 && currObject>=0) {
+		if(animationPause == 0){	// [TFD]: if animation is not paused begin animation immediately
+			sceneObjs[nObjects].animStart = glutGet(GLUT_ELAPSED_TIME);
+		} else {			// [TFD]: Else begin animation on resume
+			sceneObjs[nObjects].animStart = animationPause;
+		}
+	}
 	if ( id == 62 ) animationPause = glutGet(GLUT_ELAPSED_TIME);	// [TFD]: Pause all animation
 	if ( id == 63 ) {
 		unsigned int animationResume = glutGet(GLUT_ELAPSED_TIME);
